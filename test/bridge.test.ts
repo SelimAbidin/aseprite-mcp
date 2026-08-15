@@ -33,6 +33,21 @@ test("bridge accepts an unauthenticated local handshake when no token is configu
   bridge.close();
 });
 
+test("bridge treats repeated valid handshakes as idempotent", () => {
+  const bridge = createBridge();
+  const connection = new FakeBridgeConnection();
+
+  bridge.acceptConnection(connection);
+  connection.emitMessage(bridgeHello());
+  connection.emitMessage(bridgeHello());
+
+  assert.equal(bridge.snapshot().connected, true);
+  assert.equal(connection.closeCode, undefined);
+  assert.equal(connection.sentMessages.length, 2);
+  assert.equal(bridge.snapshot().lastEvent, "repeated_hello_acknowledged");
+  bridge.close();
+});
+
 test("bridge rejects a bad token when authentication is configured", () => {
   const bridge = createBridge(TOKEN);
   const connection = new FakeBridgeConnection();

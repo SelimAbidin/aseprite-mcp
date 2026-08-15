@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { isAllowedWebSocketOrigin } from "../src/bridge/websocket-server.js";
+import {
+  isAllowedWebSocketOrigin,
+  isSuccessfulWebSocketSend,
+} from "../src/bridge/websocket-server.js";
+
+test("WebSocket send guard accepts both runtime success values", () => {
+  assert.equal(isSuccessfulWebSocketSend(undefined), true);
+  assert.equal(isSuccessfulWebSocketSend(null), true);
+  assert.equal(isSuccessfulWebSocketSend(new Error("send failed")), false);
+});
 
 test("WebSocket origin guard accepts non-browser clients", () => {
   assert.equal(isAllowedWebSocketOrigin({ host: "127.0.0.1:3210" }), true);

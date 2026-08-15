@@ -9,6 +9,12 @@ export interface WebSocketServerDependencies {
   readonly httpServer: HttpServer;
 }
 
+export function isSuccessfulWebSocketSend(
+  error: Error | null | undefined,
+): boolean {
+  return error == null;
+}
+
 export function isAllowedWebSocketOrigin(
   headers: IncomingHttpHeaders,
 ): boolean {
@@ -29,8 +35,11 @@ function adaptWebSocket(webSocket: WebSocket): BridgeConnection {
   return {
     close: (code, reason) => webSocket.close(code, reason),
     onClose: (listener) => {
-      webSocket.on("close", listener);
-      return () => webSocket.off("close", listener);
+      const handleClose = (code: number, reason: Buffer): void => {
+        listener({ code, reason: reason.toString("utf8") });
+      };
+      webSocket.on("close", handleClose);
+      return () => webSocket.off("close", handleClose);
     },
     onMessage: (listener) => {
       const handleMessage = (data: Buffer, isBinary: boolean): void => {
@@ -50,7 +59,7 @@ function adaptWebSocket(webSocket: WebSocket): BridgeConnection {
           return;
         }
         webSocket.send(message, (error) => {
-          if (error === undefined) resolve();
+          if (isSuccessfulWebSocketSend(error)) resolve();
           else reject(error);
         });
       }),

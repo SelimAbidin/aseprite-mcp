@@ -1,4 +1,7 @@
-import type { BridgeConnection } from "../../src/bridge/aseprite-bridge.js";
+import type {
+  BridgeCloseInfo,
+  BridgeConnection,
+} from "../../src/bridge/aseprite-bridge.js";
 
 export class FakeBridgeConnection implements BridgeConnection {
   readonly sentMessages: string[] = [];
@@ -6,7 +9,7 @@ export class FakeBridgeConnection implements BridgeConnection {
   closeCode: number | undefined;
   closeReason: string | undefined;
 
-  readonly #closeListeners = new Set<() => void>();
+  readonly #closeListeners = new Set<(info: BridgeCloseInfo) => void>();
   readonly #messageListeners = new Set<(message: string) => void>();
 
   public close(code: number, reason: string): void {
@@ -15,8 +18,10 @@ export class FakeBridgeConnection implements BridgeConnection {
     this.emitClose();
   }
 
-  public emitClose(): void {
-    for (const listener of [...this.#closeListeners]) listener();
+  public emitClose(
+    info: BridgeCloseInfo = { code: this.closeCode ?? 1000, reason: "" },
+  ): void {
+    for (const listener of [...this.#closeListeners]) listener(info);
   }
 
   public emitMessage(message: unknown): void {
@@ -25,7 +30,7 @@ export class FakeBridgeConnection implements BridgeConnection {
     for (const listener of [...this.#messageListeners]) listener(serialized);
   }
 
-  public onClose(listener: () => void): () => void {
+  public onClose(listener: (info: BridgeCloseInfo) => void): () => void {
     this.#closeListeners.add(listener);
     return () => this.#closeListeners.delete(listener);
   }

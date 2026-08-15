@@ -87,3 +87,34 @@ test("aseprite_get_document preserves NO_ACTIVE_SPRITE", async () => {
   });
   bridge.close();
 });
+
+test("aseprite_get_document normalizes Aseprite's null empty arrays", async () => {
+  const { bridge, connection } = createConnectedBridge();
+
+  const documentPromise = readAsepriteDocument(bridge);
+  const request = JSON.parse(connection.sentMessages.at(-1) ?? "{}");
+  connection.emitMessage({
+    id: request.id,
+    ok: true,
+    protocolVersion: 1,
+    result: {
+      activeFrameNumber: 1,
+      colorMode: "rgb",
+      frameCount: 1,
+      height: 16,
+      id: 1,
+      isModified: false,
+      layers: null,
+      slices: null,
+      tags: null,
+      width: 16,
+    },
+    type: "response",
+  });
+
+  const document = await documentPromise;
+  assert.deepEqual(document.layers, []);
+  assert.deepEqual(document.slices, []);
+  assert.deepEqual(document.tags, []);
+  bridge.close();
+});

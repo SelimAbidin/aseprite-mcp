@@ -14,15 +14,27 @@ type Unsubscribe = () => void;
 
 export interface BridgeConnection {
   close(code: number, reason: string): void;
-  onClose(listener: () => void): Unsubscribe;
+  onClose(listener: (info: BridgeCloseInfo) => void): Unsubscribe;
   onMessage(listener: (message: string) => void): Unsubscribe;
   send(message: string): Promise<void>;
+}
+
+export interface BridgeCloseInfo {
+  readonly code: number;
+  readonly reason: string;
 }
 
 export interface BridgeSnapshot {
   readonly client?: BridgeClient;
   readonly connected: boolean;
   readonly connectedAt?: string;
+  readonly lastEvent: string;
+  readonly lastEventAt: string;
+  readonly phase: "connected" | "disconnected" | "handshaking";
+  readonly recentEvents: readonly {
+    readonly at: string;
+    readonly event: string;
+  }[];
 }
 
 export interface AsepriteBridgeOptions {
@@ -37,7 +49,7 @@ interface PendingRequest {
   readonly timeout: NodeJS.Timeout;
 }
 
-const DEFAULT_HANDSHAKE_TIMEOUT_MS = 5_000;
+const DEFAULT_HANDSHAKE_TIMEOUT_MS = 30_000;
 
 export class AsepriteBridge {
   readonly #handshakeTimeoutMs: number;
@@ -50,12 +62,16 @@ export class AsepriteBridge {
   #connectedAt: Date | undefined;
   #connection: BridgeConnection | undefined;
   #connectionCleanup: Unsubscribe[] = [];
+  #lastEvent = "bridge_started";
+  #lastEventAt = new Date();
+  #recentEvents: { at: Date; event: string }[] = [];
 
   public constructor(options: AsepriteBridgeOptions) {
     this.#handshakeTimeoutMs =
       options.handshakeTimeoutMs ?? DEFAULT_HANDSHAKE_TIMEOUT_MS;
     this.#requestTimeoutMs = options.requestTimeoutMs;
     this.#token = options.token;
+    this.#markEvent("bridge_started");
   }
 
   public acceptConnection(connection: BridgeConnection): void {
@@ -63,14 +79,17 @@ export class AsepriteBridge {
       this.#candidateConnection !== undefined ||
       this.#connection !== undefined
     ) {
+      this.#markEvent("connection_rejected_already_connected");
       connection.close(1013, "An Aseprite extension is already connected");
       return;
     }
 
     this.#candidateConnection = connection;
+    this.#markEvent("connection_accepted_waiting_for_hello");
     let authenticated = false;
 
     const handshakeTimeout = setTimeout(() => {
+      this.#markEvent("handshake_timeout");
       connection.close(1008, "Bridge handshake timed out");
     }, this.#handshakeTimeoutMs);
     handshakeTimeout.unref();
@@ -79,9 +98,12 @@ export class AsepriteBridge {
       if (!authenticated) {
         if (this.#candidateConnection !== connection) return;
 
+        this.#markEvent("hello_received");
+
         const hello = this.#parseJson(message, bridgeHelloSchema);
 
         if (hello === undefined || !this.#tokenMatches(hello.token)) {
+          this.#markEvent("hello_rejected");
           connection.close(1008, "Invalid bridge handshake");
           return;
         }
@@ -92,30 +114,41 @@ export class AsepriteBridge {
         this.#connection = connection;
         this.#client = hello.client;
         this.#connectedAt = new Date();
-        void connection
-          .send(
-            JSON.stringify({
-              protocolVersion: BRIDGE_PROTOCOL_VERSION,
-              type: "hello_accepted",
-            }),
-          )
-          .catch(() => connection.close(1011, "Bridge handshake failed"));
+        this.#markEvent("hello_accepted");
+        this.#acknowledgeHello(connection);
+        return;
+      }
+
+      const repeatedHello = this.#parseJson(message, bridgeHelloSchema);
+      if (repeatedHello !== undefined) {
+        if (!this.#tokenMatches(repeatedHello.token)) {
+          this.#markEvent("repeated_hello_rejected");
+          connection.close(1008, "Invalid repeated bridge handshake");
+          return;
+        }
+
+        this.#markEvent("repeated_hello_acknowledged");
+        this.#acknowledgeHello(connection);
         return;
       }
 
       this.#handleResponse(message, connection);
     });
 
-    const unsubscribeClose = connection.onClose(() => {
+    const unsubscribeClose = connection.onClose((info) => {
       clearTimeout(handshakeTimeout);
       unsubscribeMessage();
       unsubscribeClose();
 
       if (this.#candidateConnection === connection) {
         this.#candidateConnection = undefined;
+        if (!authenticated) this.#markEvent("handshake_connection_closed");
       }
 
       if (this.#connection === connection) {
+        this.#markEvent(
+          `active_connection_closed:${info.code}:${info.reason || "no_reason"}`,
+        );
         this.#disconnect();
       }
     });
@@ -176,12 +209,25 @@ export class AsepriteBridge {
 
   public snapshot(): BridgeSnapshot {
     if (this.#connection === undefined || this.#client === undefined) {
-      return { connected: false };
+      return {
+        connected: false,
+        lastEvent: this.#lastEvent,
+        lastEventAt: this.#lastEventAt.toISOString(),
+        phase:
+          this.#candidateConnection === undefined
+            ? "disconnected"
+            : "handshaking",
+        recentEvents: this.#serializedRecentEvents(),
+      };
     }
 
     return {
       client: this.#client,
       connected: true,
+      lastEvent: this.#lastEvent,
+      lastEventAt: this.#lastEventAt.toISOString(),
+      phase: "connected",
+      recentEvents: this.#serializedRecentEvents(),
       ...(this.#connectedAt === undefined
         ? {}
         : { connectedAt: this.#connectedAt.toISOString() }),
@@ -202,10 +248,25 @@ export class AsepriteBridge {
     this.#pendingRequests.clear();
   }
 
+  #acknowledgeHello(connection: BridgeConnection): void {
+    void connection
+      .send(
+        JSON.stringify({
+          protocolVersion: BRIDGE_PROTOCOL_VERSION,
+          type: "hello_accepted",
+        }),
+      )
+      .catch((error: unknown) => {
+        this.#markEvent(`hello_ack_failed:${String(error)}`);
+        connection.close(1011, "Bridge handshake failed");
+      });
+  }
+
   #handleResponse(message: string, connection: BridgeConnection): void {
     const response = this.#parseJson(message, bridgeResponseSchema);
 
     if (response === undefined) {
+      this.#markEvent("invalid_response_received");
       connection.close(1002, "Invalid bridge response");
       return;
     }
@@ -247,5 +308,19 @@ export class AsepriteBridge {
     return (
       receivedToken !== undefined && secretsEqual(receivedToken, this.#token)
     );
+  }
+
+  #markEvent(event: string): void {
+    this.#lastEvent = event;
+    this.#lastEventAt = new Date();
+    this.#recentEvents.push({ at: this.#lastEventAt, event });
+    this.#recentEvents = this.#recentEvents.slice(-10);
+  }
+
+  #serializedRecentEvents(): { at: string; event: string }[] {
+    return this.#recentEvents.map(({ at, event }) => ({
+      at: at.toISOString(),
+      event,
+    }));
   }
 }

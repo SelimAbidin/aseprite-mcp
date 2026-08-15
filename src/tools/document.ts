@@ -82,11 +82,48 @@ export const asepriteDocumentOutputSchema = z.object({
 
 export type AsepriteDocument = z.infer<typeof asepriteDocumentOutputSchema>;
 
+function normalizeLayerArrays(value: unknown): unknown {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return value;
+  }
+
+  const layer = value as Record<string, unknown>;
+  if (layer.children === null) return { ...layer, children: [] };
+  if (!Array.isArray(layer.children)) return layer;
+
+  return {
+    ...layer,
+    children: layer.children.map(normalizeLayerArrays),
+  };
+}
+
+function normalizeAsepriteEmptyArrays(value: unknown): unknown {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return value;
+  }
+
+  const document = value as Record<string, unknown>;
+  const normalizeArray = (
+    arrayValue: unknown,
+    mapItem: (item: unknown) => unknown = (item) => item,
+  ): unknown => {
+    if (arrayValue === null) return [];
+    return Array.isArray(arrayValue) ? arrayValue.map(mapItem) : arrayValue;
+  };
+
+  return {
+    ...document,
+    layers: normalizeArray(document.layers, normalizeLayerArrays),
+    slices: normalizeArray(document.slices),
+    tags: normalizeArray(document.tags),
+  };
+}
+
 export async function readAsepriteDocument(
   bridge: AsepriteBridge,
 ): Promise<AsepriteDocument> {
   return asepriteDocumentOutputSchema.parse(
-    await bridge.request("get_document", {}),
+    normalizeAsepriteEmptyArrays(await bridge.request("get_document", {})),
   );
 }
 

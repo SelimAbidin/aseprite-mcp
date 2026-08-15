@@ -1,14 +1,17 @@
 local BRIDGE_PROTOCOL_VERSION = 1
-local EXTENSION_VERSION = "0.1.0"
+local EXTENSION_VERSION = "0.1.3"
 
 local bridgeSocket = nil
+local bridgeHandshakeTimer = nil
+local bridgeHelloSent = false
 local bridgeState = "disconnected"
+local bridgeLastError = nil
 local pluginRef = nil
 
 local handlers = {}
 
 local function newJsonArray()
-  return json.decode("[]")
+  return {}
 end
 
 local function colorModeName(colorMode)
@@ -228,13 +231,69 @@ handlers.get_document = function(_params)
   return result
 end
 
-local function sendMessage(message)
-  if bridgeSocket ~= nil then
-    bridgeSocket:sendText(json.encode(message))
+local function sendMessage(socket, message)
+  if socket == nil then
+    return false
+  end
+
+  local ok, sendError = pcall(function()
+    socket:sendText(json.encode(message))
+  end)
+
+  if not ok then
+    bridgeLastError = tostring(sendError)
+    if bridgeSocket == socket then
+      bridgeState = "disconnected"
+    end
+    return false
+  end
+
+  return true
+end
+
+local function stopHandshakeTimer()
+  if bridgeHandshakeTimer ~= nil then
+    bridgeHandshakeTimer:stop()
+    bridgeHandshakeTimer = nil
   end
 end
 
-local function sendError(id, code, message, details)
+local function sendHello(socket)
+  if bridgeSocket ~= socket then
+    return false
+  end
+
+  if bridgeHelloSent then
+    return true
+  end
+
+  bridgeState = "authenticating"
+
+  local hello = {
+    protocolVersion = BRIDGE_PROTOCOL_VERSION,
+    type = "hello",
+    client = {
+      name = "aseprite-mcp-extension",
+      version = EXTENSION_VERSION,
+      asepriteVersion = tostring(app.version),
+      apiVersion = app.apiVersion or 0
+    }
+  }
+
+  local token = pluginRef.preferences.token or ""
+  if token ~= "" then
+    hello.token = token
+  end
+
+  if sendMessage(socket, hello) then
+    bridgeHelloSent = true
+    return true
+  end
+
+  return false
+end
+
+local function sendError(socket, id, code, message, details)
   local response = {
     protocolVersion = BRIDGE_PROTOCOL_VERSION,
     type = "response",
@@ -250,69 +309,69 @@ local function sendError(id, code, message, details)
     response.error.details = details
   end
 
-  sendMessage(response)
+  sendMessage(socket, response)
 end
 
-local function handleRequest(request)
+local function handleRequest(socket, request)
   if request.protocolVersion ~= BRIDGE_PROTOCOL_VERSION or
       type(request.id) ~= "string" or
       type(request.method) ~= "string" then
-    sendError(request.id or "unknown", "INVALID_REQUEST", "Invalid bridge request.")
+    sendError(socket, request.id or "unknown", "INVALID_REQUEST", "Invalid bridge request.")
     return
   end
 
   local handler = handlers[request.method]
   if handler == nil then
-    sendError(request.id, "UNSUPPORTED_METHOD", "Unsupported method: " .. request.method)
+    sendError(socket, request.id, "UNSUPPORTED_METHOD", "Unsupported method: " .. request.method)
     return
   end
 
   local ok, result = pcall(handler, request.params or {})
   if not ok then
     if type(result) == "table" and result.bridgeError == true then
-      sendError(request.id, result.code, result.message, result.details)
+      sendError(socket, request.id, result.code, result.message, result.details)
       return
     end
 
-    sendError(request.id, "ASEPRITE_OPERATION_FAILED", tostring(result))
+    sendError(socket, request.id, "ASEPRITE_OPERATION_FAILED", tostring(result))
     return
   end
 
-  sendMessage {
+  sendMessage(socket, {
     protocolVersion = BRIDGE_PROTOCOL_VERSION,
     type = "response",
     id = request.id,
     ok = true,
     result = result
-  }
+  })
 end
 
-local function handleMessage(messageType, data)
+local function handleMessage(socket, messageType, data, errorMessage)
+  if bridgeSocket ~= socket then
+    return
+  end
+
   if messageType == WebSocketMessageType.OPEN then
-    bridgeState = "authenticating"
-
-    local hello = {
-      protocolVersion = BRIDGE_PROTOCOL_VERSION,
-      type = "hello",
-      client = {
-        name = "aseprite-mcp-extension",
-        version = EXTENSION_VERSION,
-        asepriteVersion = tostring(app.version),
-        apiVersion = app.apiVersion or 0
-      }
-    }
-
-    local token = pluginRef.preferences.token or ""
-    if token ~= "" then
-      hello.token = token
+    bridgeLastError = nil
+    if sendHello(socket) then
+      stopHandshakeTimer()
     end
-
-    sendMessage(hello)
     return
   end
 
   if messageType == WebSocketMessageType.CLOSE then
+    bridgeHelloSent = false
     bridgeState = "disconnected"
+    if errorMessage ~= nil and errorMessage ~= "" then
+      bridgeLastError = errorMessage
+    end
+    return
+  end
+
+  if messageType == WebSocketMessageType.ERROR then
+    bridgeHelloSent = false
+    bridgeState = "error"
+    bridgeLastError = errorMessage or data or "Unknown WebSocket error"
     return
   end
 
@@ -327,27 +386,73 @@ local function handleMessage(messageType, data)
 
   if message.type == "hello_accepted" and
       message.protocolVersion == BRIDGE_PROTOCOL_VERSION then
+    stopHandshakeTimer()
     bridgeState = "connected"
+    bridgeLastError = nil
   elseif message.type == "request" then
-    handleRequest(message)
+    handleRequest(socket, message)
   end
 end
 
+local function startHandshakeTimer(socket)
+  stopHandshakeTimer()
+
+  local timer
+  timer = Timer {
+    interval = 0.25,
+    ontick = function()
+      if bridgeSocket ~= socket then
+        timer:stop()
+        return
+      end
+
+      if sendHello(socket) then
+        timer:stop()
+        if bridgeHandshakeTimer == timer then
+          bridgeHandshakeTimer = nil
+        end
+      end
+    end
+  }
+  bridgeHandshakeTimer = timer
+  timer:start()
+end
+
 local function connectBridge()
+  stopHandshakeTimer()
+
   if bridgeSocket ~= nil then
     bridgeSocket:close()
     bridgeSocket = nil
   end
 
   bridgeState = "connecting"
-  bridgeSocket = WebSocket {
+  bridgeLastError = nil
+  bridgeHelloSent = false
+
+  local socket
+  socket = WebSocket {
     url = pluginRef.preferences.serverUrl,
     deflate = false,
     minreconnectwait = 1,
     maxreconnectwait = 10,
-    onreceive = handleMessage
+    onreceive = function(messageType, data, errorMessage)
+      local ok, callbackError = pcall(
+        handleMessage,
+        socket,
+        messageType,
+        data,
+        errorMessage)
+
+      if not ok and bridgeSocket == socket then
+        bridgeState = "error"
+        bridgeLastError = tostring(callbackError)
+      end
+    end
   }
-  bridgeSocket:connect()
+  bridgeSocket = socket
+  socket:connect()
+  startHandshakeTimer(socket)
 end
 
 local function showConfiguration()
@@ -398,12 +503,17 @@ function init(plugin)
     title = "MCP Connection Status",
     group = "file_scripts",
     onclick = function()
+      local statusText = {
+        "State: " .. bridgeState,
+        "Server: " .. plugin.preferences.serverUrl
+      }
+      if bridgeLastError ~= nil then
+        statusText[#statusText + 1] = "Last error: " .. bridgeLastError
+      end
+
       app.alert {
         title = "Aseprite MCP",
-        text = {
-          "State: " .. bridgeState,
-          "Server: " .. plugin.preferences.serverUrl
-        }
+        text = statusText
       }
     end
   }
@@ -419,10 +529,13 @@ function init(plugin)
 end
 
 function exit(_plugin)
+  stopHandshakeTimer()
+
   if bridgeSocket ~= nil then
     bridgeSocket:close()
     bridgeSocket = nil
   end
   bridgeState = "disconnected"
+  bridgeHelloSent = false
   pluginRef = nil
 end
