@@ -12,7 +12,7 @@ http://127.0.0.1:3210/mcp
     v
 Node.js 26 / TypeScript process
     |
-    | authenticated local WebSocket
+    | local WebSocket (optional shared-secret authentication)
     v
 ws://127.0.0.1:3210/aseprite
     |
@@ -45,7 +45,7 @@ The default handler will support the current MCP protocol era and the SDK's stat
 
 The bridge owns:
 
-- The single authenticated Aseprite WebSocket connection.
+- The single validated Aseprite WebSocket connection.
 - A map of pending request IDs to promises.
 - Per-request timeouts.
 - Disconnect rejection and cleanup.
@@ -55,7 +55,7 @@ Only one Aseprite connection is supported in v0.1. A second connection is reject
 
 ### Lua extension
 
-The extension loads with Aseprite, connects to the local WebSocket endpoint, authenticates, and dispatches a fixed set of methods.
+The extension loads with Aseprite, connects to the local WebSocket endpoint, performs the configured handshake, and dispatches a fixed set of methods.
 
 Minimum planned Aseprite version: 1.3.0. This gives the bridge access to both the WebSocket API and the built-in JSON API.
 
@@ -102,7 +102,7 @@ Every message has a protocol version and a discriminated `type`.
 }
 ```
 
-The server does not send tool requests until it accepts the handshake.
+The `token` field is omitted when the server has no shared secret configured. The server does not send tool requests until it accepts the handshake.
 
 ### Request
 
@@ -169,9 +169,9 @@ Tool handlers translate these into concise MCP tool errors while preserving the 
 
 - Bind to `127.0.0.1` by default.
 - Validate HTTP `Host` and `Origin` values to prevent DNS rebinding.
-- Require a bearer token on `/mcp`.
-- Require the same configured secret in the WebSocket handshake.
-- Reject unauthenticated WebSockets before processing requests.
+- When `ASEPRITE_MCP_TOKEN` is configured, require it as a bearer token on `/mcp`.
+- When configured, require the same secret in the WebSocket handshake.
+- Reject WebSockets that fail the configured handshake before processing requests.
 - Set request and message size limits.
 
 Listening on non-loopback interfaces is not part of v0.1.
@@ -194,16 +194,16 @@ Listening on non-loopback interfaces is not part of v0.1.
 
 The initial configuration contract will use environment variables:
 
-| Variable                           | Default     | Purpose                                       |
-| ---------------------------------- | ----------- | --------------------------------------------- |
-| `ASEPRITE_MCP_HOST`                | `127.0.0.1` | HTTP bind address; v0.1 accepts loopback only |
-| `ASEPRITE_MCP_PORT`                | `3210`      | HTTP and WebSocket port                       |
-| `ASEPRITE_MCP_TOKEN`               | none        | Required shared authentication secret         |
-| `ASEPRITE_MCP_ALLOWED_DIRECTORIES` | none        | Platform-delimited filesystem roots           |
-| `ASEPRITE_MCP_REQUEST_TIMEOUT_MS`  | `10000`     | Bridge request deadline                       |
-| `ASEPRITE_MCP_LOG_LEVEL`           | `info`      | Server logging level                          |
+| Variable                           | Default     | Purpose                                        |
+| ---------------------------------- | ----------- | ---------------------------------------------- |
+| `ASEPRITE_MCP_HOST`                | `127.0.0.1` | HTTP bind address; v0.1 accepts loopback only  |
+| `ASEPRITE_MCP_PORT`                | `3210`      | HTTP and WebSocket port                        |
+| `ASEPRITE_MCP_TOKEN`               | none        | Optional shared secret; enables authentication |
+| `ASEPRITE_MCP_ALLOWED_DIRECTORIES` | none        | Platform-delimited filesystem roots            |
+| `ASEPRITE_MCP_REQUEST_TIMEOUT_MS`  | `10000`     | Bridge request deadline                        |
+| `ASEPRITE_MCP_LOG_LEVEL`           | `info`      | Server logging level                           |
 
-The Lua extension will store its server URL and token in plugin preferences after explicit user configuration.
+The Lua extension stores its server URL and optional token in plugin preferences.
 
 ## Testing strategy
 

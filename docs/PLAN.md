@@ -45,7 +45,7 @@ The first release is intentionally local-first. It is not a hosted multi-user se
 - Build the installable Aseprite extension shell.
 - Add automated protocol tests with a mock Aseprite peer.
 
-Phase 0 is complete when an MCP client can connect over Streamable HTTP, list an empty tool set, and a mock Aseprite extension can complete the authenticated bridge handshake. `aseprite_status` is added separately in `T001`.
+Phase 0 is complete. An MCP client can connect over Streamable HTTP, and the bridge supports a validated, optionally authenticated handshake, request correlation, disconnect cleanup, and reconnects. `aseprite_status` was added separately in `T001`.
 
 ### Phase 1: read-only tools
 

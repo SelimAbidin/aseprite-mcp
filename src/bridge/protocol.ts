@@ -12,8 +12,13 @@ export const bridgeClientSchema = z.object({
 export const bridgeHelloSchema = z.object({
   client: bridgeClientSchema,
   protocolVersion: z.literal(BRIDGE_PROTOCOL_VERSION),
-  token: z.string().min(1),
+  token: z.string().min(1).optional(),
   type: z.literal("hello"),
+});
+
+export const bridgeHelloAcceptedSchema = z.object({
+  protocolVersion: z.literal(BRIDGE_PROTOCOL_VERSION),
+  type: z.literal("hello_accepted"),
 });
 
 export const bridgeRequestSchema = z.object({
@@ -53,5 +58,6 @@ export const bridgeResponseSchema = z.discriminatedUnion("ok", [
 
 export type BridgeClient = z.infer<typeof bridgeClientSchema>;
 export type BridgeHello = z.infer<typeof bridgeHelloSchema>;
+export type BridgeHelloAccepted = z.infer<typeof bridgeHelloAcceptedSchema>;
 export type BridgeRequest = z.infer<typeof bridgeRequestSchema>;
 export type BridgeResponse = z.infer<typeof bridgeResponseSchema>;

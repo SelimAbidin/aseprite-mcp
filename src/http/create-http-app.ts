@@ -17,6 +17,7 @@ export function createHttpApp({ bridge, config }: HttpAppDependencies) {
   const mcpHandler = createMcpHandler(() =>
     createAsepriteMcpServer({ bridge }),
   );
+  const nodeMcpHandler = toNodeHandler(mcpHandler);
 
   app.get("/health", (_request, response) => {
     response.json({
@@ -25,7 +26,9 @@ export function createHttpApp({ bridge, config }: HttpAppDependencies) {
     });
   });
 
-  app.all("/mcp", requireBearerToken(config.token), toNodeHandler(mcpHandler));
+  app.all("/mcp", requireBearerToken(config.token), (request, response) =>
+    nodeMcpHandler(request, response, request.body),
+  );
 
   return {
     app,

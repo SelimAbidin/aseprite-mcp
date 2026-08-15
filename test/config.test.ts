@@ -6,12 +6,17 @@ import { loadConfig } from "../src/config.js";
 const TOKEN = "test-token-that-is-at-least-thirty-two-characters";
 
 test("loadConfig returns documented defaults", () => {
-  const config = loadConfig({ ASEPRITE_MCP_TOKEN: TOKEN });
+  const config = loadConfig({});
 
   assert.equal(config.host, "127.0.0.1");
   assert.equal(config.port, 3210);
   assert.equal(config.requestTimeoutMs, 10_000);
   assert.deepEqual(config.allowedDirectories, []);
+  assert.equal(config.token, undefined);
+});
+
+test("loadConfig accepts an optional long local token", () => {
+  assert.equal(loadConfig({ ASEPRITE_MCP_TOKEN: TOKEN }).token, TOKEN);
 });
 
 test("loadConfig rejects non-loopback hosts", () => {

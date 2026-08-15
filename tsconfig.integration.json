@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "outDir": ".test-integration-dist",
+    "sourceMap": false
+  },
+  "include": ["src/**/*.ts", "test-integration/**/*.ts"],
+  "exclude": [".test-dist", ".test-integration-dist", "dist", "node_modules"]
+}

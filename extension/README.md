@@ -1,5 +1,13 @@
-# Aseprite extension scaffold
+# Aseprite MCP extension
 
 This directory will be packaged as the installable Aseprite MCP bridge extension.
 
-The current scaffold only registers a status menu command. It intentionally does not connect to the WebSocket endpoint until the authenticated handshake and reconnection behavior are implemented in `T000`.
+The extension currently:
+
+- connects to `http://127.0.0.1:3210/aseprite` by default;
+- reconnects with bounded backoff;
+- performs the versioned bridge handshake with an optional token;
+- handles the `get_status` bridge method used by `aseprite_status`;
+- provides **File > Scripts > MCP Connection Status** and **Configure MCP Bridge** commands.
+
+The Lua bridge must still be manually verified in a supported Aseprite installation before release packaging.

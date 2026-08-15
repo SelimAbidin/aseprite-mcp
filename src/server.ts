@@ -13,13 +13,17 @@ export interface ServerRuntime {
 }
 
 export function createServerRuntime(config: ServerConfig): ServerRuntime {
-  const bridge = new AsepriteBridge(config.requestTimeoutMs);
+  const bridge = new AsepriteBridge({
+    requestTimeoutMs: config.requestTimeoutMs,
+    token: config.token,
+  });
   const { app, close: closeMcp } = createHttpApp({ bridge, config });
   const httpServer = createServer(app);
   const webSocketServer = attachAsepriteWebSocketServer({ bridge, httpServer });
 
   return {
     close: async () => {
+      bridge.close();
       await closeMcp();
       await new Promise<void>((resolve, reject) => {
         webSocketServer.close((webSocketError) => {

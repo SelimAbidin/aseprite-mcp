@@ -1,5 +1,6 @@
 dist
 .test-dist
+.test-integration-dist
 node_modules
 package-lock.json
 *.aseprite-extension

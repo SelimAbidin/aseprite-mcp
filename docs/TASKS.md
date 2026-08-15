@@ -15,27 +15,25 @@ Before implementation, set exactly one task to `in-progress`. A task becomes `co
 
 ## Backlog summary
 
-| ID     | Task                                             | Status      | Depends on |
-| ------ | ------------------------------------------------ | ----------- | ---------- |
-| `T000` | Project and transport foundation                 | in-progress | None       |
-| `T001` | `aseprite_status`                                | planned     | `T000`     |
-| `T002` | `aseprite_get_document`                          | planned     | `T001`     |
-| `T003` | `aseprite_create_sprite`                         | planned     | `T002`     |
-| `T004` | `aseprite_open_sprite`                           | planned     | `T003`     |
-| `T005` | `aseprite_add_layer`                             | planned     | `T004`     |
-| `T006` | `aseprite_add_frame`                             | planned     | `T005`     |
-| `T007` | `aseprite_draw_pixels`                           | planned     | `T006`     |
-| `T008` | `aseprite_undo`                                  | planned     | `T007`     |
-| `T009` | `aseprite_redo`                                  | planned     | `T008`     |
-| `T010` | `aseprite_save`                                  | planned     | `T009`     |
-| `T011` | `aseprite_export`                                | planned     | `T010`     |
-| `T012` | Package, documentation, and release verification | planned     | `T011`     |
+| ID     | Task                                             | Status   | Depends on |
+| ------ | ------------------------------------------------ | -------- | ---------- |
+| `T000` | Project and transport foundation                 | complete | None       |
+| `T001` | `aseprite_status`                                | complete | `T000`     |
+| `T002` | `aseprite_get_document`                          | planned  | `T001`     |
+| `T003` | `aseprite_create_sprite`                         | planned  | `T002`     |
+| `T004` | `aseprite_open_sprite`                           | planned  | `T003`     |
+| `T005` | `aseprite_add_layer`                             | planned  | `T004`     |
+| `T006` | `aseprite_add_frame`                             | planned  | `T005`     |
+| `T007` | `aseprite_draw_pixels`                           | planned  | `T006`     |
+| `T008` | `aseprite_undo`                                  | planned  | `T007`     |
+| `T009` | `aseprite_redo`                                  | planned  | `T008`     |
+| `T010` | `aseprite_save`                                  | planned  | `T009`     |
+| `T011` | `aseprite_export`                                | planned  | `T010`     |
+| `T012` | Package, documentation, and release verification | planned  | `T011`     |
 
 ## T000: Project and transport foundation
 
-Status: `in-progress`
-
-Current checkpoint: project scaffolding.
+Status: `complete`
 
 Scope:
 
@@ -51,17 +49,17 @@ Scope:
 Acceptance criteria:
 
 - `npm run build`, `npm run typecheck`, and `npm test` pass on Node 26.
-- Unauthorized HTTP and WebSocket requests are rejected.
+- Unauthorized HTTP and WebSocket requests are rejected when a token is configured.
 - A mock extension can authenticate and reconnect.
 - Pending requests reject immediately when the extension disconnects.
 - The server never listens outside loopback.
-- No application MCP tool is introduced; `/health` provides foundation diagnostics until `T001`.
+- `/health` provides foundation diagnostics independently of MCP tools.
 
 ## T001: `aseprite_status`
 
-Status: `planned`
+Status: `complete`
 
-Purpose: Report server health and whether an authenticated Aseprite extension is connected.
+Purpose: Report server health and whether an Aseprite extension has completed the configured handshake.
 
 Input: No arguments.
 

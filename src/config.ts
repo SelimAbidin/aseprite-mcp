@@ -23,7 +23,7 @@ const environmentSchema = z.object({
     .int()
     .positive()
     .default(DEFAULT_REQUEST_TIMEOUT_MS),
-  ASEPRITE_MCP_TOKEN: z.string().min(32),
+  ASEPRITE_MCP_TOKEN: z.string().min(32).optional(),
 });
 
 export interface ServerConfig {
@@ -32,7 +32,7 @@ export interface ServerConfig {
   readonly logLevel: "debug" | "info" | "warn" | "error";
   readonly port: number;
   readonly requestTimeoutMs: number;
-  readonly token: string;
+  readonly token: string | undefined;
 }
 
 export function loadConfig(

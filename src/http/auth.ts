@@ -1,19 +1,16 @@
-import { timingSafeEqual } from "node:crypto";
-
 import type { RequestHandler } from "express";
 
-function secretsEqual(left: string, right: string): boolean {
-  const leftBuffer = Buffer.from(left);
-  const rightBuffer = Buffer.from(right);
+import { secretsEqual } from "../security/secrets.js";
 
-  return (
-    leftBuffer.length === rightBuffer.length &&
-    timingSafeEqual(leftBuffer, rightBuffer)
-  );
-}
-
-export function requireBearerToken(expectedToken: string): RequestHandler {
+export function requireBearerToken(
+  expectedToken: string | undefined,
+): RequestHandler {
   return (request, response, next) => {
+    if (expectedToken === undefined) {
+      next();
+      return;
+    }
+
     const authorization = request.header("authorization");
     const prefix = "Bearer ";
 
