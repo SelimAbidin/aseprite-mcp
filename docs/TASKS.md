@@ -15,25 +15,27 @@ Before implementation, set exactly one task to `in-progress`. A task becomes `co
 
 ## Backlog summary
 
-| ID | Task | Status | Depends on |
-| --- | --- | --- | --- |
-| `T000` | Project and transport foundation | planned | None |
-| `T001` | `aseprite_status` | planned | `T000` |
-| `T002` | `aseprite_get_document` | planned | `T001` |
-| `T003` | `aseprite_create_sprite` | planned | `T002` |
-| `T004` | `aseprite_open_sprite` | planned | `T003` |
-| `T005` | `aseprite_add_layer` | planned | `T004` |
-| `T006` | `aseprite_add_frame` | planned | `T005` |
-| `T007` | `aseprite_draw_pixels` | planned | `T006` |
-| `T008` | `aseprite_undo` | planned | `T007` |
-| `T009` | `aseprite_redo` | planned | `T008` |
-| `T010` | `aseprite_save` | planned | `T009` |
-| `T011` | `aseprite_export` | planned | `T010` |
-| `T012` | Package, documentation, and release verification | planned | `T011` |
+| ID     | Task                                             | Status      | Depends on |
+| ------ | ------------------------------------------------ | ----------- | ---------- |
+| `T000` | Project and transport foundation                 | in-progress | None       |
+| `T001` | `aseprite_status`                                | planned     | `T000`     |
+| `T002` | `aseprite_get_document`                          | planned     | `T001`     |
+| `T003` | `aseprite_create_sprite`                         | planned     | `T002`     |
+| `T004` | `aseprite_open_sprite`                           | planned     | `T003`     |
+| `T005` | `aseprite_add_layer`                             | planned     | `T004`     |
+| `T006` | `aseprite_add_frame`                             | planned     | `T005`     |
+| `T007` | `aseprite_draw_pixels`                           | planned     | `T006`     |
+| `T008` | `aseprite_undo`                                  | planned     | `T007`     |
+| `T009` | `aseprite_redo`                                  | planned     | `T008`     |
+| `T010` | `aseprite_save`                                  | planned     | `T009`     |
+| `T011` | `aseprite_export`                                | planned     | `T010`     |
+| `T012` | Package, documentation, and release verification | planned     | `T011`     |
 
 ## T000: Project and transport foundation
 
-Status: `planned`
+Status: `in-progress`
+
+Current checkpoint: project scaffolding.
 
 Scope:
 

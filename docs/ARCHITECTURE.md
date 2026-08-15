@@ -31,11 +31,11 @@ The Node process owns one HTTP server and binds to `127.0.0.1` by default.
 
 Planned routes:
 
-| Route | Purpose |
-| --- | --- |
-| `/mcp` | MCP Streamable HTTP endpoint |
+| Route       | Purpose                                              |
+| ----------- | ---------------------------------------------------- |
+| `/mcp`      | MCP Streamable HTTP endpoint                         |
 | `/aseprite` | WebSocket upgrade endpoint used by the Lua extension |
-| `/health` | Minimal process and bridge readiness information |
+| `/health`   | Minimal process and bridge readiness information     |
 
 The implementation will use the official MCP TypeScript SDK v2 HTTP entry point. MCP server instances may be created per HTTP request, while the Aseprite bridge remains process-level state injected into each tool handler.
 
@@ -148,18 +148,18 @@ The server does not send tool requests until it accepts the handshake.
 
 Stable bridge error codes will include:
 
-| Code | Meaning |
-| --- | --- |
-| `ASEPRITE_DISCONNECTED` | No authenticated extension is connected |
-| `BRIDGE_TIMEOUT` | Aseprite did not answer within the configured deadline |
-| `INVALID_REQUEST` | A bridge message or parameters failed validation |
-| `UNSUPPORTED_METHOD` | The Lua dispatcher does not implement the requested method |
-| `NO_ACTIVE_SPRITE` | The operation requires an active sprite |
-| `UNSUPPORTED_COLOR_MODE` | The operation does not support the active sprite's mode |
-| `OUT_OF_BOUNDS` | Coordinates or dimensions are outside the valid canvas |
-| `PATH_NOT_ALLOWED` | A requested filesystem path is outside configured roots |
-| `FILE_EXISTS` | An output exists and overwrite was not explicitly allowed |
-| `ASEPRITE_OPERATION_FAILED` | Aseprite rejected or failed the operation |
+| Code                        | Meaning                                                    |
+| --------------------------- | ---------------------------------------------------------- |
+| `ASEPRITE_DISCONNECTED`     | No authenticated extension is connected                    |
+| `BRIDGE_TIMEOUT`            | Aseprite did not answer within the configured deadline     |
+| `INVALID_REQUEST`           | A bridge message or parameters failed validation           |
+| `UNSUPPORTED_METHOD`        | The Lua dispatcher does not implement the requested method |
+| `NO_ACTIVE_SPRITE`          | The operation requires an active sprite                    |
+| `UNSUPPORTED_COLOR_MODE`    | The operation does not support the active sprite's mode    |
+| `OUT_OF_BOUNDS`             | Coordinates or dimensions are outside the valid canvas     |
+| `PATH_NOT_ALLOWED`          | A requested filesystem path is outside configured roots    |
+| `FILE_EXISTS`               | An output exists and overwrite was not explicitly allowed  |
+| `ASEPRITE_OPERATION_FAILED` | Aseprite rejected or failed the operation                  |
 
 Tool handlers translate these into concise MCP tool errors while preserving the code in structured content.
 
@@ -194,14 +194,14 @@ Listening on non-loopback interfaces is not part of v0.1.
 
 The initial configuration contract will use environment variables:
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `ASEPRITE_MCP_HOST` | `127.0.0.1` | HTTP bind address; v0.1 accepts loopback only |
-| `ASEPRITE_MCP_PORT` | `3210` | HTTP and WebSocket port |
-| `ASEPRITE_MCP_TOKEN` | none | Required shared authentication secret |
-| `ASEPRITE_MCP_ALLOWED_DIRECTORIES` | none | Platform-delimited filesystem roots |
-| `ASEPRITE_MCP_REQUEST_TIMEOUT_MS` | `10000` | Bridge request deadline |
-| `ASEPRITE_MCP_LOG_LEVEL` | `info` | Server logging level |
+| Variable                           | Default     | Purpose                                       |
+| ---------------------------------- | ----------- | --------------------------------------------- |
+| `ASEPRITE_MCP_HOST`                | `127.0.0.1` | HTTP bind address; v0.1 accepts loopback only |
+| `ASEPRITE_MCP_PORT`                | `3210`      | HTTP and WebSocket port                       |
+| `ASEPRITE_MCP_TOKEN`               | none        | Required shared authentication secret         |
+| `ASEPRITE_MCP_ALLOWED_DIRECTORIES` | none        | Platform-delimited filesystem roots           |
+| `ASEPRITE_MCP_REQUEST_TIMEOUT_MS`  | `10000`     | Bridge request deadline                       |
+| `ASEPRITE_MCP_LOG_LEVEL`           | `info`      | Server logging level                          |
 
 The Lua extension will store its server URL and token in plugin preferences after explicit user configuration.
 
@@ -227,4 +227,3 @@ The Lua extension will store its server URL and token in plugin preferences afte
 ### Manual Aseprite tests
 
 Each tool task contains a manual test performed with the installed extension. Manual tests verify UI state, undo behavior, file results, and reconnection behavior that mocks cannot prove.
-

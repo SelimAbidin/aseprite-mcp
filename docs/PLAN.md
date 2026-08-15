@@ -8,17 +8,17 @@ The first release is intentionally local-first. It is not a hosted multi-user se
 
 ## Agreed technology
 
-| Area | Decision |
-| --- | --- |
-| Runtime | Node.js 26 |
-| Language | TypeScript with strict type checking |
-| MCP SDK | Official TypeScript SDK v2 packages |
-| MCP transport | Streamable HTTP |
-| HTTP endpoint | `http://127.0.0.1:3210/mcp` by default |
-| Aseprite bridge | WebSocket at `ws://127.0.0.1:3210/aseprite` |
-| Aseprite integration | Installable Lua extension |
-| Validation | Zod schemas at MCP and bridge boundaries |
-| Testing | Node test runner, protocol tests, mock bridge tests, and manual Aseprite verification |
+| Area                 | Decision                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| Runtime              | Node.js 26                                                                            |
+| Language             | TypeScript with strict type checking                                                  |
+| MCP SDK              | Official TypeScript SDK v2 packages                                                   |
+| MCP transport        | Streamable HTTP                                                                       |
+| HTTP endpoint        | `http://127.0.0.1:3210/mcp` by default                                                |
+| Aseprite bridge      | WebSocket at `ws://127.0.0.1:3210/aseprite`                                           |
+| Aseprite integration | Installable Lua extension                                                             |
+| Validation           | Zod schemas at MCP and bridge boundaries                                              |
+| Testing              | Node test runner, protocol tests, mock bridge tests, and manual Aseprite verification |
 
 ## Delivery principles
 

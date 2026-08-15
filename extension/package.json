@@ -1,0 +1,21 @@
+{
+  "name": "aseprite-mcp-extension",
+  "displayName": "Aseprite MCP Bridge",
+  "description": "Connects Aseprite to the local Aseprite MCP server",
+  "version": "0.1.0",
+  "author": {
+    "name": "Aseprite MCP contributors"
+  },
+  "publisher": "aseprite-mcp",
+  "license": "MIT",
+  "categories": [
+    "Scripts"
+  ],
+  "contributes": {
+    "scripts": [
+      {
+        "path": "./aseprite-mcp.lua"
+      }
+    ]
+  }
+}

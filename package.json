@@ -1,0 +1,42 @@
+{
+  "name": "aseprite-mcp",
+  "version": "0.1.0",
+  "description": "A Streamable HTTP MCP server for controlling Aseprite",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26.0.0 <27"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
+    "dev": "tsx watch src/index.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "start": "node dist/src/index.js",
+    "test": "npm run test:compile && node --test .test-dist/test/*.test.js",
+    "test:compile": "tsc -p tsconfig.test.json",
+    "test:watch": "tsx --test --watch test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/express": "^2.0.0",
+    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "express": "^5.2.1",
+    "ws": "^8.21.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0",
+    "@types/ws": "^8.18.1",
+    "eslint": "^10.8.1",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.12",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0"
+  }
+}
