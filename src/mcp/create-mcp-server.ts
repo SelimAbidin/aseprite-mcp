@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/server";
 
 import { SERVER_NAME, SERVER_VERSION } from "../constants.js";
 import type { AsepriteBridge } from "../bridge/aseprite-bridge.js";
+import { registerDocumentTool } from "../tools/document.js";
 import { registerStatusTool } from "../tools/status.js";
 
 export interface McpServerDependencies {
@@ -23,5 +24,6 @@ export function createAsepriteMcpServer(
   );
 
   registerStatusTool(server, dependencies.bridge);
+  registerDocumentTool(server, dependencies.bridge);
   return server;
 }

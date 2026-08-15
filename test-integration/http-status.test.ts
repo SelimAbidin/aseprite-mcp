@@ -11,7 +11,7 @@ import { createServerRuntime } from "../src/server.js";
 
 const TOKEN = "integration-token-that-is-at-least-thirty-two-characters";
 
-test("Streamable HTTP discovers and calls aseprite_status", async (context) => {
+test("Streamable HTTP discovers and calls Aseprite tools", async (context) => {
   const config: ServerConfig = {
     allowedDirectories: [],
     host: "127.0.0.1",
@@ -58,7 +58,7 @@ test("Streamable HTTP discovers and calls aseprite_status", async (context) => {
   const tools = await client.listTools();
   assert.deepEqual(
     tools.tools.map((tool) => tool.name),
-    ["aseprite_status"],
+    ["aseprite_status", "aseprite_get_document"],
   );
 
   const result = await client.callTool({
@@ -66,4 +66,16 @@ test("Streamable HTTP discovers and calls aseprite_status", async (context) => {
     name: "aseprite_status",
   });
   assert.equal(result.isError, undefined);
+
+  const documentResult = await client.callTool({
+    arguments: {},
+    name: "aseprite_get_document",
+  });
+  assert.equal(documentResult.isError, true);
+  assert.deepEqual(documentResult.content, [
+    {
+      text: "ASEPRITE_DISCONNECTED: The Aseprite extension is not connected.",
+      type: "text",
+    },
+  ]);
 });

@@ -30,7 +30,7 @@ test("MCP clients can discover and call aseprite_status", async (context) => {
   const tools = await client.listTools();
   assert.deepEqual(
     tools.tools.map((tool) => tool.name),
-    ["aseprite_status"],
+    ["aseprite_status", "aseprite_get_document"],
   );
 
   const result = await client.callTool({

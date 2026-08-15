@@ -4,9 +4,9 @@ A local Model Context Protocol server for controlling Aseprite through its Lua s
 
 ## Project status
 
-The transport foundation (`T000`) and first tool (`T001`) are complete. The server exposes `aseprite_status`, which reports server and bridge state while disconnected and includes Aseprite and active-sprite details when the extension is connected.
+The transport foundation (`T000`) and first two tools (`T001` and `T002`) are complete. The server can report bridge status and inspect the active Aseprite document without returning pixel data.
 
-The next planned tool is `aseprite_get_document` (`T002`). See the task backlog for its exact output and acceptance criteria.
+The next planned tool is `aseprite_create_sprite` (`T003`). See the task backlog for its exact input and acceptance criteria.
 
 The project will use:
 
@@ -69,3 +69,4 @@ The default endpoints are:
 ## Available tools
 
 - `aseprite_status`: read-only server, bridge, Aseprite, and active-sprite status
+- `aseprite_get_document`: read-only active-document metadata, frames, ordered layer hierarchy, tags, and slices

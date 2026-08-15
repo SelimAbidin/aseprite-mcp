@@ -1,4 +1,4 @@
-import type { Server as HttpServer } from "node:http";
+import type { IncomingHttpHeaders, Server as HttpServer } from "node:http";
 
 import { WebSocket, WebSocketServer } from "ws";
 
@@ -7,6 +7,22 @@ import type { AsepriteBridge, BridgeConnection } from "./aseprite-bridge.js";
 export interface WebSocketServerDependencies {
   readonly bridge: AsepriteBridge;
   readonly httpServer: HttpServer;
+}
+
+export function isAllowedWebSocketOrigin(
+  headers: IncomingHttpHeaders,
+): boolean {
+  const origin = headers.origin;
+
+  if (origin === undefined) return true;
+  if (headers.host === undefined) return false;
+
+  try {
+    const originUrl = new URL(origin);
+    return originUrl.protocol === "http:" && originUrl.host === headers.host;
+  } catch {
+    return false;
+  }
 }
 
 function adaptWebSocket(webSocket: WebSocket): BridgeConnection {
@@ -52,9 +68,11 @@ export function attachAsepriteWebSocketServer({
 
   httpServer.on("upgrade", (request, socket, head) => {
     const url = new URL(request.url ?? "/", "http://127.0.0.1");
-    const hasBrowserOrigin = request.headers.origin !== undefined;
 
-    if (url.pathname !== "/aseprite" || hasBrowserOrigin) {
+    if (
+      url.pathname !== "/aseprite" ||
+      !isAllowedWebSocketOrigin(request.headers)
+    ) {
       socket.destroy();
       return;
     }
