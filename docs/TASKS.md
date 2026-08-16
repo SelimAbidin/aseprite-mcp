@@ -22,7 +22,7 @@ Before implementation, set exactly one task to `in-progress`. A task becomes `co
 | `T002` | `aseprite_get_document`                          | complete | `T001`     |
 | `T003` | `aseprite_create_sprite`                         | complete | `T002`     |
 | `T004` | `aseprite_open_sprite`                           | complete | `T003`     |
-| `T005` | `aseprite_add_layer`                             | planned  | `T004`     |
+| `T005` | `aseprite_add_layer`                             | complete | `T004`     |
 | `T006` | `aseprite_add_frame`                             | planned  | `T005`     |
 | `T007` | `aseprite_draw_pixels`                           | planned  | `T006`     |
 | `T008` | `aseprite_undo`                                  | planned  | `T007`     |
@@ -139,7 +139,7 @@ Acceptance criteria:
 
 ## T005: `aseprite_add_layer`
 
-Status: `planned`
+Status: `complete`
 
 Purpose: Add and activate a regular image layer.
 

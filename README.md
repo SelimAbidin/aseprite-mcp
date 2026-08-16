@@ -4,9 +4,9 @@ A local Model Context Protocol server for controlling Aseprite through its Lua s
 
 ## Project status
 
-The transport foundation (`T000`) and first four tools (`T001` through `T004`) are complete. The server can report bridge status, inspect the active Aseprite document without returning pixel data, create unsaved RGB sprites, and open existing sprites from explicitly allowed directories.
+The transport foundation (`T000`) and first five tools (`T001` through `T005`) are complete. The server can report bridge status, inspect the active Aseprite document without returning pixel data, create or open sprites, and add regular image layers.
 
-The next planned tool is `aseprite_add_layer` (`T005`). See the task backlog for its exact input and acceptance criteria.
+The next planned tool is `aseprite_add_frame` (`T006`). See the task backlog for its exact input and acceptance criteria.
 
 The project will use:
 
@@ -86,3 +86,4 @@ The default endpoints are:
 - `aseprite_get_document`: read-only active-document metadata, frames, ordered layer hierarchy, tags, and slices
 - `aseprite_create_sprite`: create and activate an unsaved RGB sprite with an optional name and background color
 - `aseprite_open_sprite`: open and activate an existing image or Aseprite document from an allowed directory
+- `aseprite_add_layer`: add and activate a named regular image layer as one undoable operation

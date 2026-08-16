@@ -7,7 +7,7 @@ The extension currently:
 - connects to `http://127.0.0.1:3210/aseprite` by default;
 - reconnects with bounded backoff;
 - performs the versioned bridge handshake with an optional token;
-- handles the `get_status`, `get_document`, `create_sprite`, and `open_sprite` bridge methods;
+- handles the `get_status`, `get_document`, `create_sprite`, `open_sprite`, and `add_layer` bridge methods;
 - provides **File > Scripts > MCP Connection Status** and **Configure MCP Bridge** commands.
 
 The Lua bridge must be manually verified in a supported Aseprite installation before release packaging. The core `aseprite_create_sprite` path was verified with Aseprite 1.3.18.2 arm64 on 2026-08-16.
@@ -27,3 +27,11 @@ The Lua bridge must be manually verified in a supported Aseprite installation be
 3. Call the tool with a relative path and with an absolute path outside the test directory. Verify that both return `PATH_NOT_ALLOWED` and that Aseprite does not open a document.
 4. Create a symlink inside the allowed directory whose target is outside it. Call the tool for a file through that symlink and verify that it returns `PATH_NOT_ALLOWED`.
 5. Put a corrupt or unsupported file inside the allowed directory and call the tool. Verify that it returns `ASEPRITE_OPERATION_FAILED`, the extension remains connected, and a later `aseprite_status` call succeeds.
+
+## Manual verification: `aseprite_add_layer`
+
+1. Start the server and connect extension version `0.1.7` in Aseprite 1.3 or later.
+2. Open or create a sprite, note its current layer count, and call `aseprite_add_layer` with `name: "Highlights"`.
+3. Verify that exactly one regular image layer named `Highlights` is added, it is active, and the returned layer path matches the document's active-layer path.
+4. Undo once and verify that the layer is removed. Redo once and verify that the same layer returns, confirming creation and naming form one undo step.
+5. Close all sprites and call the tool again. Verify that it returns `NO_ACTIVE_SPRITE` and the extension remains connected.

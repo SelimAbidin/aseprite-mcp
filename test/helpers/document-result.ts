@@ -72,3 +72,49 @@ export function documentResult(): Record<string, unknown> {
     width: 64,
   };
 }
+
+export function addedLayerResult(): Record<string, unknown> {
+  return {
+    document: {
+      activeFrameNumber: 1,
+      activeLayer: {
+        name: "Highlights",
+        path: [2],
+        type: "image",
+      },
+      colorMode: "rgb",
+      filename: "/sprites/hero.aseprite",
+      frameCount: 1,
+      height: 32,
+      id: 18,
+      isModified: true,
+      layers: [
+        {
+          editable: true,
+          name: "Layer 1",
+          opacity: 255,
+          type: "image",
+          visible: true,
+        },
+        {
+          editable: true,
+          name: "Highlights",
+          opacity: 255,
+          type: "image",
+          visible: true,
+        },
+      ],
+      slices: null,
+      tags: null,
+      width: 64,
+    },
+    layer: {
+      editable: true,
+      name: "Highlights",
+      opacity: 255,
+      path: [2],
+      type: "image",
+      visible: true,
+    },
+  };
+}

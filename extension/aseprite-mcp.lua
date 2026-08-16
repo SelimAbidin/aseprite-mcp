@@ -1,5 +1,5 @@
 local BRIDGE_PROTOCOL_VERSION = 1
-local EXTENSION_VERSION = "0.1.6"
+local EXTENSION_VERSION = "0.1.7"
 local MAX_ASEPRITE_SPRITE_DIMENSION = 65535
 
 local bridgeSocket = nil
@@ -84,22 +84,28 @@ local function appendPath(path, index)
   return result
 end
 
+local function summarizeLayer(layer)
+  local summary = {
+    editable = layer.isEditable,
+    name = layer.name,
+    type = layerTypeName(layer),
+    visible = layer.isVisible
+  }
+
+  if layer.opacity ~= nil then
+    summary.opacity = layer.opacity
+  end
+
+  return summary
+end
+
 local function summarizeLayers(layers, activeLayer, parentPath)
   local summaries = newJsonArray()
   local activeSummary = nil
 
   for index, layer in ipairs(layers) do
     local path = appendPath(parentPath, index)
-    local summary = {
-      editable = layer.isEditable,
-      name = layer.name,
-      type = layerTypeName(layer),
-      visible = layer.isVisible
-    }
-
-    if layer.opacity ~= nil then
-      summary.opacity = layer.opacity
-    end
+    local summary = summarizeLayer(layer)
 
     if layer.isGroup then
       local children, nestedActive = summarizeLayers(layer.layers, activeLayer, path)
@@ -373,6 +379,46 @@ handlers.open_sprite = function(params)
   end
 
   return result
+end
+
+handlers.add_layer = function(params)
+  local paramsType = type(params)
+  if paramsType ~= "table" and paramsType ~= "userdata" then
+    raiseBridgeError("INVALID_REQUEST", "add_layer params must be an object.")
+  end
+  if type(params.name) ~= "string" or
+      #params.name < 1 or
+      #params.name > 255 or
+      string.match(params.name, "%S") == nil then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "name must be a non-empty string of at most 255 characters.")
+  end
+
+  local sprite = app.sprite
+  if sprite == nil then
+    raiseBridgeError("NO_ACTIVE_SPRITE", "Open or create a sprite first.")
+  end
+
+  local layer = nil
+  app.transaction("Add layer", function()
+    layer = sprite:newLayer()
+    if layer == nil then
+      error("Aseprite did not create the layer.")
+    end
+    layer.name = params.name
+  end)
+
+  app.layer = layer
+  app.refresh()
+
+  local document = documentSummary()
+  local layerSummary = summarizeLayer(layer)
+  layerSummary.path = document.activeLayer.path
+  return {
+    document = document,
+    layer = layerSummary
+  }
 end
 
 local function sendMessage(socket, message)

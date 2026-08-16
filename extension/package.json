@@ -2,7 +2,7 @@
   "name": "aseprite-mcp-extension",
   "displayName": "Aseprite MCP Bridge",
   "description": "Connects Aseprite to the local Aseprite MCP server",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "author": {
     "name": "Aseprite MCP contributors"
   },
