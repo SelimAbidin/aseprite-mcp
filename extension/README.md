@@ -7,7 +7,7 @@ The extension currently:
 - connects to `http://127.0.0.1:3210/aseprite` by default;
 - reconnects with bounded backoff;
 - performs the versioned bridge handshake with an optional token;
-- handles the `get_status`, `get_document`, `create_sprite`, `open_sprite`, `add_layer`, `add_frame`, and `draw_pixels` bridge methods;
+- handles the `get_status`, `get_document`, `create_sprite`, `open_sprite`, `add_layer`, `add_frame`, `draw_pixels`, and `undo` bridge methods;
 - provides **File > Scripts > MCP Connection Status** and **Configure MCP Bridge** commands.
 
 The Lua bridge must be manually verified in a supported Aseprite installation before release packaging. The core `aseprite_create_sprite` path was verified with Aseprite 1.3.18.2 arm64 on 2026-08-16.
@@ -45,3 +45,11 @@ The Lua bridge must be manually verified in a supported Aseprite installation be
 5. Call the tool with an x coordinate equal to the sprite width and with a y coordinate equal to its height. Verify that each returns `OUT_OF_BOUNDS`, no pixels change, and no cel is created.
 6. Open an indexed or grayscale sprite and verify that the tool returns `UNSUPPORTED_COLOR_MODE` without changing it.
 7. Target a group, reference, tilemap, locked layer, nonexistent layer path, or nonexistent frame and verify that the request fails without mutation and that the extension remains connected.
+
+## Manual verification: `aseprite_undo`
+
+1. Start the server and connect extension version `0.1.10` in Aseprite 1.3 or later.
+2. Create or open a sprite, make two visibly different undoable changes, and call `aseprite_undo` once. Verify that only the latest change is reverted.
+3. Verify that the result reports `canRedo: true` and that `canUndo` matches whether an earlier operation remains in the Edit menu.
+4. Call `aseprite_undo` until no undo step remains, then call it once more. Verify that it returns `NO_UNDO_AVAILABLE`, the sprite does not change, and the extension remains connected.
+5. Close all sprites and call the tool. Verify that it returns `NO_ACTIVE_SPRITE`.

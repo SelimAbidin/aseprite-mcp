@@ -9,6 +9,7 @@ import { registerDocumentTool } from "../tools/document.js";
 import { registerDrawPixelsTool } from "../tools/draw-pixels.js";
 import { registerOpenSpriteTool } from "../tools/open-sprite.js";
 import { registerStatusTool } from "../tools/status.js";
+import { registerUndoTool } from "../tools/undo.js";
 
 export interface McpServerDependencies {
   readonly allowedDirectories: readonly string[];
@@ -45,5 +46,6 @@ export function createAsepriteMcpServer(
   registerAddLayerTool(server, dependencies.bridge);
   registerAddFrameTool(server, dependencies.bridge);
   registerDrawPixelsTool(server, dependencies.bridge);
+  registerUndoTool(server, dependencies.bridge);
   return server;
 }

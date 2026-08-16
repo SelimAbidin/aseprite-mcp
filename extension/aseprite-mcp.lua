@@ -1,5 +1,5 @@
 local BRIDGE_PROTOCOL_VERSION = 1
-local EXTENSION_VERSION = "0.1.9"
+local EXTENSION_VERSION = "0.1.10"
 local MAX_ASEPRITE_SPRITE_DIMENSION = 65535
 local MAX_DRAW_PIXELS = 4096
 
@@ -667,6 +667,37 @@ handlers.draw_pixels = function(params)
       path = targetLayerPath
     }
   }
+end
+
+local function undoRedoAvailability()
+  return {
+    canRedo = app.command.Redo.enabled == true,
+    canUndo = app.command.Undo.enabled == true
+  }
+end
+
+handlers.undo = function(params)
+  local paramsType = type(params)
+  if paramsType ~= "table" and paramsType ~= "userdata" then
+    raiseBridgeError("INVALID_REQUEST", "undo params must be an object.")
+  end
+
+  if app.sprite == nil then
+    raiseBridgeError("NO_ACTIVE_SPRITE", "Open or create a sprite first.")
+  end
+
+  if not app.command.Undo.enabled then
+    raiseBridgeError("NO_UNDO_AVAILABLE", "The active sprite has no operation to undo.")
+  end
+
+  if app.command.Undo() == false then
+    raiseBridgeError(
+      "ASEPRITE_OPERATION_FAILED",
+      "Aseprite could not undo the latest operation.")
+  end
+
+  app.refresh()
+  return undoRedoAvailability()
 end
 
 local function sendMessage(socket, message)

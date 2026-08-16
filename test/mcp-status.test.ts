@@ -42,6 +42,7 @@ test("MCP clients can discover and call aseprite_status", async (context) => {
       "aseprite_add_layer",
       "aseprite_add_frame",
       "aseprite_draw_pixels",
+      "aseprite_undo",
     ],
   );
 
