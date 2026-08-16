@@ -102,7 +102,7 @@ Every message has a protocol version and a discriminated `type`.
 }
 ```
 
-The implemented named methods are `get_status`, `get_document`, `create_sprite`, `open_sprite`, `add_layer`, `add_frame`, `draw_pixels`, and `undo`. Filesystem paths are validated and canonicalized by the Node process before a request reaches the extension.
+The implemented named methods are `get_status`, `get_document`, `create_sprite`, `open_sprite`, `add_layer`, `add_frame`, `draw_pixels`, `undo`, and `redo`. Filesystem paths are validated and canonicalized by the Node process before a request reaches the extension.
 
 The `token` field is omitted when the server has no shared secret configured. The server does not send tool requests until it accepts the handshake.
 
@@ -160,6 +160,7 @@ Stable bridge error codes will include:
 | `UNSUPPORTED_COLOR_MODE`    | The operation does not support the active sprite's mode    |
 | `OUT_OF_BOUNDS`             | Coordinates or dimensions are outside the valid canvas     |
 | `NO_UNDO_AVAILABLE`         | The active sprite has no operation available to undo       |
+| `NO_REDO_AVAILABLE`         | The active sprite has no operation available to redo       |
 | `PATH_NOT_ALLOWED`          | A requested filesystem path is outside configured roots    |
 | `FILE_EXISTS`               | An output exists and overwrite was not explicitly allowed  |
 | `ASEPRITE_OPERATION_FAILED` | Aseprite rejected or failed the operation                  |

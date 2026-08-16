@@ -1,5 +1,5 @@
 local BRIDGE_PROTOCOL_VERSION = 1
-local EXTENSION_VERSION = "0.1.10"
+local EXTENSION_VERSION = "0.1.11"
 local MAX_ASEPRITE_SPRITE_DIMENSION = 65535
 local MAX_DRAW_PIXELS = 4096
 
@@ -694,6 +694,30 @@ handlers.undo = function(params)
     raiseBridgeError(
       "ASEPRITE_OPERATION_FAILED",
       "Aseprite could not undo the latest operation.")
+  end
+
+  app.refresh()
+  return undoRedoAvailability()
+end
+
+handlers.redo = function(params)
+  local paramsType = type(params)
+  if paramsType ~= "table" and paramsType ~= "userdata" then
+    raiseBridgeError("INVALID_REQUEST", "redo params must be an object.")
+  end
+
+  if app.sprite == nil then
+    raiseBridgeError("NO_ACTIVE_SPRITE", "Open or create a sprite first.")
+  end
+
+  if not app.command.Redo.enabled then
+    raiseBridgeError("NO_REDO_AVAILABLE", "The active sprite has no operation to redo.")
+  end
+
+  if app.command.Redo() == false then
+    raiseBridgeError(
+      "ASEPRITE_OPERATION_FAILED",
+      "Aseprite could not redo the latest undone operation.")
   end
 
   app.refresh()

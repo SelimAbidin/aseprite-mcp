@@ -68,6 +68,7 @@ test("Streamable HTTP discovers and calls Aseprite tools", async (context) => {
       "aseprite_add_frame",
       "aseprite_draw_pixels",
       "aseprite_undo",
+      "aseprite_redo",
     ],
   );
 
@@ -121,6 +122,18 @@ test("Streamable HTTP discovers and calls Aseprite tools", async (context) => {
   });
   assert.equal(undoResult.isError, true);
   assert.deepEqual(undoResult.content, [
+    {
+      text: "ASEPRITE_DISCONNECTED: The Aseprite extension is not connected.",
+      type: "text",
+    },
+  ]);
+
+  const redoResult = await client.callTool({
+    arguments: {},
+    name: "aseprite_redo",
+  });
+  assert.equal(redoResult.isError, true);
+  assert.deepEqual(redoResult.content, [
     {
       text: "ASEPRITE_DISCONNECTED: The Aseprite extension is not connected.",
       type: "text",

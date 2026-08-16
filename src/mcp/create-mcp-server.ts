@@ -8,6 +8,7 @@ import { registerCreateSpriteTool } from "../tools/create-sprite.js";
 import { registerDocumentTool } from "../tools/document.js";
 import { registerDrawPixelsTool } from "../tools/draw-pixels.js";
 import { registerOpenSpriteTool } from "../tools/open-sprite.js";
+import { registerRedoTool } from "../tools/redo.js";
 import { registerStatusTool } from "../tools/status.js";
 import { registerUndoTool } from "../tools/undo.js";
 
@@ -47,5 +48,6 @@ export function createAsepriteMcpServer(
   registerAddFrameTool(server, dependencies.bridge);
   registerDrawPixelsTool(server, dependencies.bridge);
   registerUndoTool(server, dependencies.bridge);
+  registerRedoTool(server, dependencies.bridge);
   return server;
 }

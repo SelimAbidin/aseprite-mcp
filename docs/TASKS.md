@@ -26,7 +26,7 @@ Before implementation, set exactly one task to `in-progress`. A task becomes `co
 | `T006` | `aseprite_add_frame`                             | complete | `T005`     |
 | `T007` | `aseprite_draw_pixels`                           | complete | `T006`     |
 | `T008` | `aseprite_undo`                                  | complete | `T007`     |
-| `T009` | `aseprite_redo`                                  | planned  | `T008`     |
+| `T009` | `aseprite_redo`                                  | complete | `T008`     |
 | `T010` | `aseprite_save`                                  | planned  | `T009`     |
 | `T011` | `aseprite_export`                                | planned  | `T010`     |
 | `T012` | Package, documentation, and release verification | planned  | `T011`     |
@@ -211,7 +211,7 @@ Acceptance criteria:
 
 ## T009: `aseprite_redo`
 
-Status: `planned`
+Status: `complete`
 
 Purpose: Redo the latest undone active-sprite operation.
 
