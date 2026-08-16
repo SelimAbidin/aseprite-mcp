@@ -4,9 +4,11 @@ import { SERVER_NAME, SERVER_VERSION } from "../constants.js";
 import type { AsepriteBridge } from "../bridge/aseprite-bridge.js";
 import { registerCreateSpriteTool } from "../tools/create-sprite.js";
 import { registerDocumentTool } from "../tools/document.js";
+import { registerOpenSpriteTool } from "../tools/open-sprite.js";
 import { registerStatusTool } from "../tools/status.js";
 
 export interface McpServerDependencies {
+  readonly allowedDirectories: readonly string[];
   readonly bridge: AsepriteBridge;
   readonly maxSpriteDimension: number;
 }
@@ -31,6 +33,11 @@ export function createAsepriteMcpServer(
     server,
     dependencies.bridge,
     dependencies.maxSpriteDimension,
+  );
+  registerOpenSpriteTool(
+    server,
+    dependencies.bridge,
+    dependencies.allowedDirectories,
   );
   return server;
 }

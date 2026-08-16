@@ -23,6 +23,7 @@ test("MCP clients can discover and call aseprite_get_document", async (context) 
   connection.emitMessage(bridgeHello());
 
   const server = createAsepriteMcpServer({
+    allowedDirectories: [],
     bridge,
     maxSpriteDimension: 4096,
   });

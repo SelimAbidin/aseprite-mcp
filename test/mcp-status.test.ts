@@ -14,6 +14,7 @@ test("MCP clients can discover and call aseprite_status", async (context) => {
     token: undefined,
   });
   const server = createAsepriteMcpServer({
+    allowedDirectories: [],
     bridge,
     maxSpriteDimension: 4096,
   });
@@ -33,7 +34,12 @@ test("MCP clients can discover and call aseprite_status", async (context) => {
   const tools = await client.listTools();
   assert.deepEqual(
     tools.tools.map((tool) => tool.name),
-    ["aseprite_status", "aseprite_get_document", "aseprite_create_sprite"],
+    [
+      "aseprite_status",
+      "aseprite_get_document",
+      "aseprite_create_sprite",
+      "aseprite_open_sprite",
+    ],
   );
 
   const result = await client.callTool({

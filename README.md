@@ -4,9 +4,9 @@ A local Model Context Protocol server for controlling Aseprite through its Lua s
 
 ## Project status
 
-The transport foundation (`T000`) and first three tools (`T001` through `T003`) are complete. The server can report bridge status, inspect the active Aseprite document without returning pixel data, and create unsaved RGB sprites.
+The transport foundation (`T000`) and first four tools (`T001` through `T004`) are complete. The server can report bridge status, inspect the active Aseprite document without returning pixel data, create unsaved RGB sprites, and open existing sprites from explicitly allowed directories.
 
-The next planned tool is `aseprite_open_sprite` (`T004`). See the task backlog for its exact input and acceptance criteria.
+The next planned tool is `aseprite_add_layer` (`T005`). See the task backlog for its exact input and acceptance criteria.
 
 The project will use:
 
@@ -60,6 +60,14 @@ New sprite dimensions default to a maximum of 4096 pixels per axis. Override the
 ASEPRITE_MCP_MAX_SPRITE_DIMENSION=8192 npm run dev
 ```
 
+Opening, saving, and exporting files is limited to explicitly allowed directories. Configure one directory, or multiple directories separated by `:` on macOS/Linux and `;` on Windows:
+
+```sh
+ASEPRITE_MCP_ALLOWED_DIRECTORIES="/absolute/path/to/sprites:/another/allowed/path" npm run dev
+```
+
+Paths supplied to tools must be absolute. Existing symlinks are resolved before Aseprite is contacted, and a target that escapes the configured roots is rejected.
+
 Run the real Streamable HTTP integration test separately:
 
 ```sh
@@ -77,3 +85,4 @@ The default endpoints are:
 - `aseprite_status`: read-only server, bridge, Aseprite, and active-sprite status
 - `aseprite_get_document`: read-only active-document metadata, frames, ordered layer hierarchy, tags, and slices
 - `aseprite_create_sprite`: create and activate an unsaved RGB sprite with an optional name and background color
+- `aseprite_open_sprite`: open and activate an existing image or Aseprite document from an allowed directory

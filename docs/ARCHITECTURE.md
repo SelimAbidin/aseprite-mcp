@@ -102,6 +102,8 @@ Every message has a protocol version and a discriminated `type`.
 }
 ```
 
+The implemented named methods are `get_status`, `get_document`, `create_sprite`, and `open_sprite`. Filesystem paths are validated and canonicalized by the Node process before a request reaches the extension.
+
 The `token` field is omitted when the server has no shared secret configured. The server does not send tool requests until it accepts the handshake.
 
 ### Request

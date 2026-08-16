@@ -16,6 +16,7 @@ export function createHttpApp({ bridge, config }: HttpAppDependencies) {
   const app = createMcpExpressApp({ host: config.host });
   const mcpHandler = createMcpHandler(() =>
     createAsepriteMcpServer({
+      allowedDirectories: config.allowedDirectories,
       bridge,
       maxSpriteDimension: config.maxSpriteDimension,
     }),

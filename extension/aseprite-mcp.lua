@@ -1,5 +1,5 @@
 local BRIDGE_PROTOCOL_VERSION = 1
-local EXTENSION_VERSION = "0.1.5"
+local EXTENSION_VERSION = "0.1.6"
 local MAX_ASEPRITE_SPRITE_DIMENSION = 65535
 
 local bridgeSocket = nil
@@ -332,6 +332,44 @@ handlers.create_sprite = function(params)
       sprite:close()
     end
     error(result, 0)
+  end
+
+  return result
+end
+
+handlers.open_sprite = function(params)
+  local paramsType = type(params)
+  if paramsType ~= "table" and paramsType ~= "userdata" then
+    raiseBridgeError("INVALID_REQUEST", "open_sprite params must be an object.")
+  end
+  if type(params.path) ~= "string" or #params.path < 1 then
+    raiseBridgeError("INVALID_REQUEST", "path must be a non-empty string.")
+  end
+
+  local sprite = nil
+  local ok, result = pcall(function()
+    sprite = app.open(params.path)
+    if sprite == nil then
+      raiseBridgeError(
+        "ASEPRITE_OPERATION_FAILED",
+        "Aseprite could not open the requested file.")
+    end
+
+    app.refresh()
+    return documentSummary()
+  end)
+
+  if not ok then
+    if sprite ~= nil then
+      sprite:close()
+    end
+    if type(result) == "table" and result.bridgeError == true then
+      error(result, 0)
+    end
+    raiseBridgeError(
+      "ASEPRITE_OPERATION_FAILED",
+      "Aseprite could not open the requested file.",
+      { cause = tostring(result) })
   end
 
   return result
