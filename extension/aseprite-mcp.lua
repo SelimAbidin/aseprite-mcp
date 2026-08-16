@@ -1,5 +1,5 @@
 local BRIDGE_PROTOCOL_VERSION = 1
-local EXTENSION_VERSION = "0.1.7"
+local EXTENSION_VERSION = "0.1.8"
 local MAX_ASEPRITE_SPRITE_DIMENSION = 65535
 
 local bridgeSocket = nil
@@ -418,6 +418,61 @@ handlers.add_layer = function(params)
   return {
     document = document,
     layer = layerSummary
+  }
+end
+
+handlers.add_frame = function(params)
+  local paramsType = type(params)
+  if paramsType ~= "table" and paramsType ~= "userdata" then
+    raiseBridgeError("INVALID_REQUEST", "add_frame params must be an object.")
+  end
+  if params.content ~= "empty" and params.content ~= "duplicate-current" then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "content must be empty or duplicate-current.")
+  end
+  if params.durationMs ~= nil and
+      (not isInteger(params.durationMs) or params.durationMs <= 0) then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "durationMs must be a positive integer when provided.")
+  end
+
+  local site = app.site
+  local sprite = site.sprite
+  if sprite == nil then
+    raiseBridgeError("NO_ACTIVE_SPRITE", "Open or create a sprite first.")
+  end
+
+  local currentFrame = site.frame
+  if currentFrame == nil then
+    raiseBridgeError("NO_ACTIVE_SPRITE", "Open or create a sprite first.")
+  end
+
+  local frame = nil
+  local previousFrameCount = #sprite.frames
+  app.transaction("Add frame", function()
+    if params.content == "empty" then
+      frame = sprite:newEmptyFrame(currentFrame.frameNumber)
+    else
+      frame = sprite:newFrame(currentFrame)
+    end
+
+    if frame == nil or #sprite.frames ~= previousFrameCount + 1 then
+      error("Aseprite did not create exactly one frame.")
+    end
+
+    if params.durationMs ~= nil then
+      frame.duration = params.durationMs / 1000
+    end
+  end)
+
+  app.frame = frame
+  app.refresh()
+
+  return {
+    frameCount = #sprite.frames,
+    frameNumber = frame.frameNumber
   }
 end
 

@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/server";
 
 import { SERVER_NAME, SERVER_VERSION } from "../constants.js";
 import type { AsepriteBridge } from "../bridge/aseprite-bridge.js";
+import { registerAddFrameTool } from "../tools/add-frame.js";
 import { registerAddLayerTool } from "../tools/add-layer.js";
 import { registerCreateSpriteTool } from "../tools/create-sprite.js";
 import { registerDocumentTool } from "../tools/document.js";
@@ -41,5 +42,6 @@ export function createAsepriteMcpServer(
     dependencies.allowedDirectories,
   );
   registerAddLayerTool(server, dependencies.bridge);
+  registerAddFrameTool(server, dependencies.bridge);
   return server;
 }

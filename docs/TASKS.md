@@ -23,7 +23,7 @@ Before implementation, set exactly one task to `in-progress`. A task becomes `co
 | `T003` | `aseprite_create_sprite`                         | complete | `T002`     |
 | `T004` | `aseprite_open_sprite`                           | complete | `T003`     |
 | `T005` | `aseprite_add_layer`                             | complete | `T004`     |
-| `T006` | `aseprite_add_frame`                             | planned  | `T005`     |
+| `T006` | `aseprite_add_frame`                             | complete | `T005`     |
 | `T007` | `aseprite_draw_pixels`                           | planned  | `T006`     |
 | `T008` | `aseprite_undo`                                  | planned  | `T007`     |
 | `T009` | `aseprite_redo`                                  | planned  | `T008`     |
@@ -156,7 +156,7 @@ Acceptance criteria:
 
 ## T006: `aseprite_add_frame`
 
-Status: `planned`
+Status: `complete`
 
 Purpose: Add an animation frame.
 
