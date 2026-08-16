@@ -69,6 +69,8 @@ test("Streamable HTTP discovers and calls Aseprite tools", async (context) => {
       "aseprite_draw_pixels",
       "aseprite_undo",
       "aseprite_redo",
+      "aseprite_save",
+      "aseprite_export",
     ],
   );
 

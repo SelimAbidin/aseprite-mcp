@@ -27,8 +27,8 @@ Before implementation, set exactly one task to `in-progress`. A task becomes `co
 | `T007` | `aseprite_draw_pixels`                           | complete | `T006`     |
 | `T008` | `aseprite_undo`                                  | complete | `T007`     |
 | `T009` | `aseprite_redo`                                  | complete | `T008`     |
-| `T010` | `aseprite_save`                                  | planned  | `T009`     |
-| `T011` | `aseprite_export`                                | planned  | `T010`     |
+| `T010` | `aseprite_save`                                  | complete | `T009`     |
+| `T011` | `aseprite_export`                                | complete | `T010`     |
 | `T012` | Package, documentation, and release verification | planned  | `T011`     |
 
 ## T000: Project and transport foundation
@@ -225,7 +225,7 @@ Acceptance criteria:
 
 ## T010: `aseprite_save`
 
-Status: `planned`
+Status: `complete`
 
 Purpose: Save the active sprite and associate it with the target file.
 
@@ -244,7 +244,7 @@ Acceptance criteria:
 
 ## T011: `aseprite_export`
 
-Status: `planned`
+Status: `complete`
 
 Purpose: Save a copy without changing the active document's associated filename.
 

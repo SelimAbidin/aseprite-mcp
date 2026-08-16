@@ -7,7 +7,7 @@ The extension currently:
 - connects to `http://127.0.0.1:3210/aseprite` by default;
 - reconnects with bounded backoff;
 - performs the versioned bridge handshake with an optional token;
-- handles the `get_status`, `get_document`, `create_sprite`, `open_sprite`, `add_layer`, `add_frame`, `draw_pixels`, `undo`, and `redo` bridge methods;
+- handles the `get_status`, `get_document`, `create_sprite`, `open_sprite`, `add_layer`, `add_frame`, `draw_pixels`, `undo`, `redo`, `save_sprite`, and `export_sprite` bridge methods;
 - provides **File > Scripts > MCP Connection Status** and **Configure MCP Bridge** commands.
 
 The Lua bridge must be manually verified in a supported Aseprite installation before release packaging. The core `aseprite_create_sprite` path was verified with Aseprite 1.3.18.2 arm64 on 2026-08-16.
@@ -61,3 +61,21 @@ The Lua bridge must be manually verified in a supported Aseprite installation be
 3. Verify that the result reports `canUndo: true` and that `canRedo` matches whether another operation remains in the Edit menu.
 4. Call `aseprite_redo` until no redo step remains, then call it once more. Verify that it returns `NO_REDO_AVAILABLE`, the sprite does not change, and the extension remains connected.
 5. Close all sprites and call the tool. Verify that it returns `NO_ACTIVE_SPRITE`.
+
+## Manual verification: `aseprite_save`
+
+1. Start the server with `ASEPRITE_MCP_ALLOWED_DIRECTORIES` set to an absolute test directory, then connect extension version `0.1.12` in Aseprite 1.3 or later.
+2. Create an unsaved sprite, make a visible change, and call `aseprite_save` without `path`. Verify that it returns `INVALID_REQUEST` and no file is written.
+3. Call it with a new absolute `.aseprite` path in the allowed directory. Verify that the file is created, becomes the document's associated filename, and the result reports `isModified: false`.
+4. Modify the sprite again and call the tool without `path`. Verify that it saves to the associated file without prompting and returns `isModified: false`.
+5. Choose a different existing target and call the tool with `overwrite: false`; verify `FILE_EXISTS` and unchanged file contents. Repeat with `overwrite: true` and verify the target is replaced and becomes the associated filename.
+6. Try a relative path, a path outside the allowed directory, and a path through an in-root symlink to an outside directory. Verify `PATH_NOT_ALLOWED` and no file write.
+
+## Manual verification: `aseprite_export`
+
+1. Start the server with `ASEPRITE_MCP_ALLOWED_DIRECTORIES` set to an absolute test directory, then connect extension version `0.1.13` in Aseprite 1.3 or later.
+2. Open a modified `.aseprite` document and note its associated filename and modified state. Call `aseprite_export` with a new absolute `.png` path in the allowed directory.
+3. Verify that the PNG is created, the result reports the output path and `png` format, and the active document's associated filename and modified state do not change.
+4. Call the tool for the same target with `overwrite: false`; verify `FILE_EXISTS` and unchanged output contents. Repeat with `overwrite: true` and verify the output is replaced without changing the active document filename.
+5. Export to another Aseprite-supported format and verify that the result reports the selected extension as its format.
+6. Try a relative path, a path outside the allowed directory, and a path through an in-root symlink to an outside directory. Verify `PATH_NOT_ALLOWED` and no file write.

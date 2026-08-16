@@ -1,5 +1,5 @@
 local BRIDGE_PROTOCOL_VERSION = 1
-local EXTENSION_VERSION = "0.1.11"
+local EXTENSION_VERSION = "0.1.13"
 local MAX_ASEPRITE_SPRITE_DIMENSION = 65535
 local MAX_DRAW_PIXELS = 4096
 
@@ -376,6 +376,140 @@ handlers.open_sprite = function(params)
     raiseBridgeError(
       "ASEPRITE_OPERATION_FAILED",
       "Aseprite could not open the requested file.",
+      { cause = tostring(result) })
+  end
+
+  return result
+end
+
+handlers.save_sprite = function(params)
+  local paramsType = type(params)
+  if paramsType ~= "table" and paramsType ~= "userdata" then
+    raiseBridgeError("INVALID_REQUEST", "save_sprite params must be an object.")
+  end
+  if type(params.path) ~= "string" or #params.path < 1 then
+    raiseBridgeError("INVALID_REQUEST", "path must be a non-empty string.")
+  end
+  if type(params.overwrite) ~= "boolean" then
+    raiseBridgeError("INVALID_REQUEST", "overwrite must be a boolean.")
+  end
+  if not isInteger(params.spriteId) or params.spriteId < 0 then
+    raiseBridgeError("INVALID_REQUEST", "spriteId must be a non-negative integer.")
+  end
+
+  local sprite = app.sprite
+  if sprite == nil then
+    raiseBridgeError("NO_ACTIVE_SPRITE", "Open or create a sprite first.")
+  end
+  if sprite.id ~= params.spriteId then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "The active sprite changed while the save request was being prepared; retry the request.")
+  end
+  if app.fs.isDirectory(params.path) then
+    raiseBridgeError(
+      "ASEPRITE_OPERATION_FAILED",
+      "The save target is a directory, not a file.")
+  end
+  if app.fs.isFile(params.path) and not params.overwrite then
+    raiseBridgeError(
+      "FILE_EXISTS",
+      "The output file already exists and overwrite was not enabled.")
+  end
+
+  local ok, result = pcall(function()
+    local saved = sprite:saveAs(params.path)
+    if saved == false or not app.fs.isFile(params.path) then
+      error("Aseprite did not create the requested file.")
+    end
+
+    app.refresh()
+    return {
+      filename = sprite.filename,
+      isModified = sprite.isModified
+    }
+  end)
+
+  if not ok then
+    if type(result) == "table" and result.bridgeError == true then
+      error(result, 0)
+    end
+    raiseBridgeError(
+      "ASEPRITE_OPERATION_FAILED",
+      "Aseprite could not save the active sprite.",
+      { cause = tostring(result) })
+  end
+
+  return result
+end
+
+handlers.export_sprite = function(params)
+  local paramsType = type(params)
+  if paramsType ~= "table" and paramsType ~= "userdata" then
+    raiseBridgeError("INVALID_REQUEST", "export_sprite params must be an object.")
+  end
+  if type(params.path) ~= "string" or #params.path < 1 then
+    raiseBridgeError("INVALID_REQUEST", "path must be a non-empty string.")
+  end
+  if type(params.overwrite) ~= "boolean" then
+    raiseBridgeError("INVALID_REQUEST", "overwrite must be a boolean.")
+  end
+  if not isInteger(params.spriteId) or params.spriteId < 0 then
+    raiseBridgeError("INVALID_REQUEST", "spriteId must be a non-negative integer.")
+  end
+
+  local format = string.lower(app.fs.fileExtension(params.path))
+  if #format < 1 then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "The export path must include a file extension that selects the format.")
+  end
+
+  local sprite = app.sprite
+  if sprite == nil then
+    raiseBridgeError("NO_ACTIVE_SPRITE", "Open or create a sprite first.")
+  end
+  if sprite.id ~= params.spriteId then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "The active sprite changed while the export request was being prepared; retry the request.")
+  end
+  if app.fs.isDirectory(params.path) then
+    raiseBridgeError(
+      "ASEPRITE_OPERATION_FAILED",
+      "The export target is a directory, not a file.")
+  end
+  if app.fs.isFile(params.path) and not params.overwrite then
+    raiseBridgeError(
+      "FILE_EXISTS",
+      "The output file already exists and overwrite was not enabled.")
+  end
+
+  local originalFilename = sprite.filename or ""
+  local ok, result = pcall(function()
+    local exported = sprite:saveCopyAs(params.path)
+    if exported == false or not app.fs.isFile(params.path) then
+      error("Aseprite did not create the requested export.")
+    end
+    if (sprite.filename or "") ~= originalFilename then
+      sprite.filename = originalFilename
+      error("Aseprite changed the active document filename while exporting.")
+    end
+
+    app.refresh()
+    return {
+      format = format,
+      path = params.path
+    }
+  end)
+
+  if not ok then
+    if type(result) == "table" and result.bridgeError == true then
+      error(result, 0)
+    end
+    raiseBridgeError(
+      "ASEPRITE_OPERATION_FAILED",
+      "Aseprite could not export the active sprite.",
       { cause = tostring(result) })
   end
 

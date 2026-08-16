@@ -4,9 +4,9 @@ A local Model Context Protocol server for controlling Aseprite through its Lua s
 
 ## Project status
 
-The transport foundation (`T000`) and first nine tools (`T001` through `T009`) are complete. The server can report bridge status, inspect the active Aseprite document without returning pixel data, create or open sprites, add regular image layers, add animation frames, draw bounded RGB pixel batches, and undo or redo the latest active-sprite operation.
+The transport foundation (`T000`) and all eleven v0.1 tools (`T001` through `T011`) are complete. The server can report bridge status, inspect the active Aseprite document without returning pixel data, create or open sprites, add regular image layers, add animation frames, draw bounded RGB pixel batches, undo or redo the latest active-sprite operation, safely save the active sprite, and export a copy without changing the document's associated filename.
 
-The next planned tool is `aseprite_save` (`T010`). See the task backlog for its exact input and acceptance criteria.
+The next planned task is package, documentation, and release verification (`T012`).
 
 The project will use:
 
@@ -91,3 +91,5 @@ The default endpoints are:
 - `aseprite_draw_pixels`: draw up to 4,096 RGB pixels on an optional layer path and frame as one undoable operation
 - `aseprite_undo`: undo exactly one active-sprite operation and report updated undo and redo availability
 - `aseprite_redo`: redo exactly one undone active-sprite operation and report updated undo and redo availability
+- `aseprite_save`: save the active sprite to its associated allowed file or to a new allowed path with explicit overwrite control
+- `aseprite_export`: export a copy to an allowed path with explicit overwrite control while preserving the active document's filename
