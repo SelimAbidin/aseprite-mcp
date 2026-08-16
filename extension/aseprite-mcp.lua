@@ -1,6 +1,7 @@
 local BRIDGE_PROTOCOL_VERSION = 1
-local EXTENSION_VERSION = "0.1.8"
+local EXTENSION_VERSION = "0.1.9"
 local MAX_ASEPRITE_SPRITE_DIMENSION = 65535
+local MAX_DRAW_PIXELS = 4096
 
 local bridgeSocket = nil
 local bridgeHandshakeTimer = nil
@@ -142,13 +143,13 @@ local function isInteger(value)
   return type(value) == "number" and value == math.floor(value)
 end
 
-local function parseHexColor(value)
+local function parseHexColor(value, fieldName)
   if type(value) ~= "string" or
       (#value ~= 7 and #value ~= 9) or
       string.match(value, "^#%x+$") == nil then
     raiseBridgeError(
       "INVALID_REQUEST",
-      "background must use #RRGGBB or #RRGGBBAA format.")
+      fieldName .. " must use #RRGGBB or #RRGGBBAA format.")
   end
 
   local red = tonumber(string.sub(value, 2, 3), 16)
@@ -298,7 +299,7 @@ handlers.create_sprite = function(params)
 
   local background = nil
   if params.background ~= nil then
-    background = parseHexColor(params.background)
+    background = parseHexColor(params.background, "background")
   end
 
   local sprite = nil
@@ -473,6 +474,198 @@ handlers.add_frame = function(params)
   return {
     frameCount = #sprite.frames,
     frameNumber = frame.frameNumber
+  }
+end
+
+local function resolveLayerPath(layers, path)
+  local currentLayers = layers
+  local layer = nil
+
+  for depth, index in ipairs(path) do
+    layer = currentLayers[index]
+    if layer == nil then
+      return nil
+    end
+
+    if depth < #path then
+      if not layer.isGroup then
+        return nil
+      end
+      currentLayers = layer.layers
+    end
+  end
+
+  return layer
+end
+
+handlers.draw_pixels = function(params)
+  local paramsType = type(params)
+  if paramsType ~= "table" and paramsType ~= "userdata" then
+    raiseBridgeError("INVALID_REQUEST", "draw_pixels params must be an object.")
+  end
+
+  local pixelsType = type(params.pixels)
+  if pixelsType ~= "table" and pixelsType ~= "userdata" then
+    raiseBridgeError("INVALID_REQUEST", "pixels must be an array.")
+  end
+
+  local validatedPixels = newJsonArray()
+  local pixelCount = 0
+  for index, pixel in ipairs(params.pixels) do
+    pixelCount = pixelCount + 1
+    if pixelCount > MAX_DRAW_PIXELS then
+      raiseBridgeError(
+        "INVALID_REQUEST",
+        "pixels must contain at most " .. MAX_DRAW_PIXELS .. " entries.")
+    end
+
+    local pixelType = type(pixel)
+    if pixelType ~= "table" and pixelType ~= "userdata" then
+      raiseBridgeError(
+        "INVALID_REQUEST",
+        "pixels[" .. index .. "] must be an object.")
+    end
+    if not isInteger(pixel.x) or pixel.x < 0 or
+        not isInteger(pixel.y) or pixel.y < 0 then
+      raiseBridgeError(
+        "INVALID_REQUEST",
+        "Pixel coordinates must be non-negative integers.")
+    end
+
+    validatedPixels[index] = {
+      color = parseHexColor(pixel.color, "pixels[" .. index .. "].color"),
+      x = pixel.x,
+      y = pixel.y
+    }
+  end
+
+  if pixelCount == 0 then
+    raiseBridgeError("INVALID_REQUEST", "pixels must contain at least one entry.")
+  end
+
+  local site = app.site
+  local sprite = site.sprite
+  if sprite == nil then
+    raiseBridgeError("NO_ACTIVE_SPRITE", "Open or create a sprite first.")
+  end
+  if sprite.colorMode ~= ColorMode.RGB then
+    raiseBridgeError(
+      "UNSUPPORTED_COLOR_MODE",
+      "aseprite_draw_pixels currently supports RGB sprites only.",
+      { colorMode = colorModeName(sprite.colorMode) })
+  end
+
+  local targetFrameNumber = site.frameNumber
+  if params.frameNumber ~= nil then
+    if not isInteger(params.frameNumber) or
+        params.frameNumber < 1 or
+        params.frameNumber > #sprite.frames then
+      raiseBridgeError(
+        "INVALID_REQUEST",
+        "frameNumber must identify an existing frame.")
+    end
+    targetFrameNumber = params.frameNumber
+  end
+  local targetFrame = sprite.frames[targetFrameNumber]
+
+  local targetLayer = site.layer
+  local targetLayerPath = nil
+  if params.layerPath ~= nil then
+    local layerPathType = type(params.layerPath)
+    if layerPathType ~= "table" and layerPathType ~= "userdata" then
+      raiseBridgeError("INVALID_REQUEST", "layerPath must be an array.")
+    end
+
+    targetLayerPath = newJsonArray()
+    local pathLength = 0
+    for depth, index in ipairs(params.layerPath) do
+      pathLength = pathLength + 1
+      if pathLength > 32 or not isInteger(index) or index < 1 then
+        raiseBridgeError(
+          "INVALID_REQUEST",
+          "layerPath must contain one through 32 positive integers.")
+      end
+      targetLayerPath[depth] = index
+    end
+    if pathLength == 0 then
+      raiseBridgeError(
+        "INVALID_REQUEST",
+        "layerPath must contain one through 32 positive integers.")
+    end
+
+    targetLayer = resolveLayerPath(sprite.layers, targetLayerPath)
+    if targetLayer == nil then
+      raiseBridgeError(
+        "INVALID_REQUEST",
+        "layerPath does not identify a layer in the active sprite.")
+    end
+  else
+    local _, activeLayer = summarizeLayers(sprite.layers, targetLayer, {})
+    if activeLayer ~= nil then
+      targetLayerPath = activeLayer.path
+    end
+  end
+
+  if targetLayer == nil or targetLayerPath == nil then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "Select an image layer or provide layerPath.")
+  end
+  if not targetLayer.isImage or targetLayer.isGroup or
+      targetLayer.isTilemap or targetLayer.isReference then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "The target layer must be a regular image layer.")
+  end
+  if not targetLayer.isEditable then
+    raiseBridgeError("INVALID_REQUEST", "The target layer is not editable.")
+  end
+
+  for index, pixel in ipairs(validatedPixels) do
+    if pixel.x >= sprite.width or pixel.y >= sprite.height then
+      raiseBridgeError(
+        "OUT_OF_BOUNDS",
+        "Pixel coordinates must be inside the sprite canvas.",
+        {
+          height = sprite.height,
+          index = index,
+          width = sprite.width,
+          x = pixel.x,
+          y = pixel.y
+        })
+    end
+  end
+
+  app.transaction("Draw pixels", function()
+    local cel = targetLayer:cel(targetFrame)
+    local image = Image(sprite.spec)
+    if cel ~= nil then
+      image:drawImage(cel.image, cel.position)
+    end
+
+    for _, pixel in ipairs(validatedPixels) do
+      image:drawPixel(pixel.x, pixel.y, pixel.color)
+    end
+
+    if cel == nil then
+      cel = sprite:newCel(targetLayer, targetFrame, image, Point(0, 0))
+      if cel == nil then
+        error("Aseprite did not create the target cel.")
+      end
+    else
+      cel.image = image
+      cel.position = Point(0, 0)
+    end
+  end)
+
+  app.refresh()
+  return {
+    changedPixelCount = pixelCount,
+    frameNumber = targetFrameNumber,
+    layer = {
+      name = targetLayer.name,
+      path = targetLayerPath
+    }
   }
 end
 

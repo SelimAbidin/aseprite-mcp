@@ -7,7 +7,7 @@ The extension currently:
 - connects to `http://127.0.0.1:3210/aseprite` by default;
 - reconnects with bounded backoff;
 - performs the versioned bridge handshake with an optional token;
-- handles the `get_status`, `get_document`, `create_sprite`, `open_sprite`, and `add_layer` bridge methods;
+- handles the `get_status`, `get_document`, `create_sprite`, `open_sprite`, `add_layer`, `add_frame`, and `draw_pixels` bridge methods;
 - provides **File > Scripts > MCP Connection Status** and **Configure MCP Bridge** commands.
 
 The Lua bridge must be manually verified in a supported Aseprite installation before release packaging. The core `aseprite_create_sprite` path was verified with Aseprite 1.3.18.2 arm64 on 2026-08-16.
@@ -35,3 +35,13 @@ The Lua bridge must be manually verified in a supported Aseprite installation be
 3. Verify that exactly one regular image layer named `Highlights` is added, it is active, and the returned layer path matches the document's active-layer path.
 4. Undo once and verify that the layer is removed. Redo once and verify that the same layer returns, confirming creation and naming form one undo step.
 5. Close all sprites and call the tool again. Verify that it returns `NO_ACTIVE_SPRITE` and the extension remains connected.
+
+## Manual verification: `aseprite_draw_pixels`
+
+1. Start the server and connect extension version `0.1.9` in Aseprite 1.3 or later.
+2. Create a 16x16 RGB sprite with two frames and an image layer named `Ink`. Call `aseprite_get_document` and note the `Ink` layer path.
+3. Call `aseprite_draw_pixels` for frame 2 and the `Ink` path with opaque and semi-transparent colors at several canvas coordinates. Verify that the pixels appear on frame 2 and that the result reports the batch size, frame 2, and the `Ink` layer path.
+4. Use an empty frame/layer intersection and verify that drawing creates its cel. Undo once and verify that the complete batch, including the new cel, is removed; redo once and verify that it returns.
+5. Call the tool with an x coordinate equal to the sprite width and with a y coordinate equal to its height. Verify that each returns `OUT_OF_BOUNDS`, no pixels change, and no cel is created.
+6. Open an indexed or grayscale sprite and verify that the tool returns `UNSUPPORTED_COLOR_MODE` without changing it.
+7. Target a group, reference, tilemap, locked layer, nonexistent layer path, or nonexistent frame and verify that the request fails without mutation and that the extension remains connected.

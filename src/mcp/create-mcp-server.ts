@@ -6,6 +6,7 @@ import { registerAddFrameTool } from "../tools/add-frame.js";
 import { registerAddLayerTool } from "../tools/add-layer.js";
 import { registerCreateSpriteTool } from "../tools/create-sprite.js";
 import { registerDocumentTool } from "../tools/document.js";
+import { registerDrawPixelsTool } from "../tools/draw-pixels.js";
 import { registerOpenSpriteTool } from "../tools/open-sprite.js";
 import { registerStatusTool } from "../tools/status.js";
 
@@ -43,5 +44,6 @@ export function createAsepriteMcpServer(
   );
   registerAddLayerTool(server, dependencies.bridge);
   registerAddFrameTool(server, dependencies.bridge);
+  registerDrawPixelsTool(server, dependencies.bridge);
   return server;
 }

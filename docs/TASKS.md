@@ -24,7 +24,7 @@ Before implementation, set exactly one task to `in-progress`. A task becomes `co
 | `T004` | `aseprite_open_sprite`                           | complete | `T003`     |
 | `T005` | `aseprite_add_layer`                             | complete | `T004`     |
 | `T006` | `aseprite_add_frame`                             | complete | `T005`     |
-| `T007` | `aseprite_draw_pixels`                           | planned  | `T006`     |
+| `T007` | `aseprite_draw_pixels`                           | complete | `T006`     |
 | `T008` | `aseprite_undo`                                  | planned  | `T007`     |
 | `T009` | `aseprite_redo`                                  | planned  | `T008`     |
 | `T010` | `aseprite_save`                                  | planned  | `T009`     |
@@ -174,13 +174,14 @@ Acceptance criteria:
 
 ## T007: `aseprite_draw_pixels`
 
-Status: `planned`
+Status: `complete`
 
 Purpose: Draw a batch of pixels on an RGB cel.
 
 Input:
 
-- Optional target layer and frame; defaults to the active site.
+- `layerPath`: optional one-based hierarchy path from `aseprite_get_document`; defaults to the active layer.
+- `frameNumber`: optional one-based frame number; defaults to the active frame.
 - `pixels`: bounded array of `{ x, y, color }` values.
 - Colors use `#RRGGBB` or `#RRGGBBAA`.
 
