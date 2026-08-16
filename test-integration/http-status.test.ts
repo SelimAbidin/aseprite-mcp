@@ -16,6 +16,7 @@ test("Streamable HTTP discovers and calls Aseprite tools", async (context) => {
     allowedDirectories: [],
     host: "127.0.0.1",
     logLevel: "error",
+    maxSpriteDimension: 4096,
     port: 0,
     requestTimeoutMs: 100,
     token: TOKEN,
@@ -58,7 +59,7 @@ test("Streamable HTTP discovers and calls Aseprite tools", async (context) => {
   const tools = await client.listTools();
   assert.deepEqual(
     tools.tools.map((tool) => tool.name),
-    ["aseprite_status", "aseprite_get_document"],
+    ["aseprite_status", "aseprite_get_document", "aseprite_create_sprite"],
   );
 
   const result = await client.callTool({

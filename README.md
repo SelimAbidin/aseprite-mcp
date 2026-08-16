@@ -4,9 +4,9 @@ A local Model Context Protocol server for controlling Aseprite through its Lua s
 
 ## Project status
 
-The transport foundation (`T000`) and first two tools (`T001` and `T002`) are complete. The server can report bridge status and inspect the active Aseprite document without returning pixel data.
+The transport foundation (`T000`) and first three tools (`T001` through `T003`) are complete. The server can report bridge status, inspect the active Aseprite document without returning pixel data, and create unsaved RGB sprites.
 
-The next planned tool is `aseprite_create_sprite` (`T003`). See the task backlog for its exact input and acceptance criteria.
+The next planned tool is `aseprite_open_sprite` (`T004`). See the task backlog for its exact input and acceptance criteria.
 
 The project will use:
 
@@ -54,6 +54,12 @@ For local authentication, configure an optional secret containing at least 32 ch
 ASEPRITE_MCP_TOKEN="replace-with-a-long-random-secret" npm run dev
 ```
 
+New sprite dimensions default to a maximum of 4096 pixels per axis. Override the limit when needed:
+
+```sh
+ASEPRITE_MCP_MAX_SPRITE_DIMENSION=8192 npm run dev
+```
+
 Run the real Streamable HTTP integration test separately:
 
 ```sh
@@ -70,3 +76,4 @@ The default endpoints are:
 
 - `aseprite_status`: read-only server, bridge, Aseprite, and active-sprite status
 - `aseprite_get_document`: read-only active-document metadata, frames, ordered layer hierarchy, tags, and slices
+- `aseprite_create_sprite`: create and activate an unsaved RGB sprite with an optional name and background color

@@ -15,7 +15,10 @@ export interface HttpAppDependencies {
 export function createHttpApp({ bridge, config }: HttpAppDependencies) {
   const app = createMcpExpressApp({ host: config.host });
   const mcpHandler = createMcpHandler(() =>
-    createAsepriteMcpServer({ bridge }),
+    createAsepriteMcpServer({
+      bridge,
+      maxSpriteDimension: config.maxSpriteDimension,
+    }),
   );
   const nodeMcpHandler = toNodeHandler(mcpHandler);
 

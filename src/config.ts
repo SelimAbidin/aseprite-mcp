@@ -2,6 +2,7 @@ import * as z from "zod/v4";
 
 import {
   DEFAULT_HOST,
+  DEFAULT_MAX_SPRITE_DIMENSION,
   DEFAULT_PORT,
   DEFAULT_REQUEST_TIMEOUT_MS,
 } from "./constants.js";
@@ -12,6 +13,12 @@ const environmentSchema = z.object({
   ASEPRITE_MCP_LOG_LEVEL: z
     .enum(["debug", "info", "warn", "error"])
     .default("info"),
+  ASEPRITE_MCP_MAX_SPRITE_DIMENSION: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(65_535)
+    .default(DEFAULT_MAX_SPRITE_DIMENSION),
   ASEPRITE_MCP_PORT: z.coerce
     .number()
     .int()
@@ -30,6 +37,7 @@ export interface ServerConfig {
   readonly allowedDirectories: readonly string[];
   readonly host: typeof DEFAULT_HOST;
   readonly logLevel: "debug" | "info" | "warn" | "error";
+  readonly maxSpriteDimension: number;
   readonly port: number;
   readonly requestTimeoutMs: number;
   readonly token: string | undefined;
@@ -48,6 +56,7 @@ export function loadConfig(
       .filter((entry) => entry.length > 0),
     host: parsed.ASEPRITE_MCP_HOST,
     logLevel: parsed.ASEPRITE_MCP_LOG_LEVEL,
+    maxSpriteDimension: parsed.ASEPRITE_MCP_MAX_SPRITE_DIMENSION,
     port: parsed.ASEPRITE_MCP_PORT,
     requestTimeoutMs: parsed.ASEPRITE_MCP_REQUEST_TIMEOUT_MS,
     token: parsed.ASEPRITE_MCP_TOKEN,

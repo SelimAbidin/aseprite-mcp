@@ -119,15 +119,19 @@ function normalizeAsepriteEmptyArrays(value: unknown): unknown {
   };
 }
 
-export async function readAsepriteDocument(
-  bridge: AsepriteBridge,
-): Promise<AsepriteDocument> {
+export function parseAsepriteDocument(value: unknown): AsepriteDocument {
   return asepriteDocumentOutputSchema.parse(
-    normalizeAsepriteEmptyArrays(await bridge.request("get_document", {})),
+    normalizeAsepriteEmptyArrays(value),
   );
 }
 
-function documentText(document: AsepriteDocument): string {
+export async function readAsepriteDocument(
+  bridge: AsepriteBridge,
+): Promise<AsepriteDocument> {
+  return parseAsepriteDocument(await bridge.request("get_document", {}));
+}
+
+export function documentText(document: AsepriteDocument): string {
   const filename = document.filename ?? "Untitled";
   const activeLayer =
     document.activeLayer === undefined

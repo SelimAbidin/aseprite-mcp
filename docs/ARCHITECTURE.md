@@ -194,14 +194,15 @@ Listening on non-loopback interfaces is not part of v0.1.
 
 The initial configuration contract will use environment variables:
 
-| Variable                           | Default     | Purpose                                        |
-| ---------------------------------- | ----------- | ---------------------------------------------- |
-| `ASEPRITE_MCP_HOST`                | `127.0.0.1` | HTTP bind address; v0.1 accepts loopback only  |
-| `ASEPRITE_MCP_PORT`                | `3210`      | HTTP and WebSocket port                        |
-| `ASEPRITE_MCP_TOKEN`               | none        | Optional shared secret; enables authentication |
-| `ASEPRITE_MCP_ALLOWED_DIRECTORIES` | none        | Platform-delimited filesystem roots            |
-| `ASEPRITE_MCP_REQUEST_TIMEOUT_MS`  | `10000`     | Bridge request deadline                        |
-| `ASEPRITE_MCP_LOG_LEVEL`           | `info`      | Server logging level                           |
+| Variable                            | Default     | Purpose                                          |
+| ----------------------------------- | ----------- | ------------------------------------------------ |
+| `ASEPRITE_MCP_HOST`                 | `127.0.0.1` | HTTP bind address; v0.1 accepts loopback only    |
+| `ASEPRITE_MCP_PORT`                 | `3210`      | HTTP and WebSocket port                          |
+| `ASEPRITE_MCP_TOKEN`                | none        | Optional shared secret; enables authentication   |
+| `ASEPRITE_MCP_ALLOWED_DIRECTORIES`  | none        | Platform-delimited filesystem roots              |
+| `ASEPRITE_MCP_REQUEST_TIMEOUT_MS`   | `10000`     | Bridge request deadline                          |
+| `ASEPRITE_MCP_LOG_LEVEL`            | `info`      | Server logging level                             |
+| `ASEPRITE_MCP_MAX_SPRITE_DIMENSION` | `4096`      | Maximum width or height accepted for new sprites |
 
 The Lua extension stores its server URL and optional token in plugin preferences.
 

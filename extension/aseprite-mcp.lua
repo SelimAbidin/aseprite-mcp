@@ -1,5 +1,6 @@
 local BRIDGE_PROTOCOL_VERSION = 1
-local EXTENSION_VERSION = "0.1.3"
+local EXTENSION_VERSION = "0.1.5"
+local MAX_ASEPRITE_SPRITE_DIMENSION = 65535
 
 local bridgeSocket = nil
 local bridgeHandshakeTimer = nil
@@ -131,6 +132,30 @@ local function raiseBridgeError(code, message, details)
   }, 0)
 end
 
+local function isInteger(value)
+  return type(value) == "number" and value == math.floor(value)
+end
+
+local function parseHexColor(value)
+  if type(value) ~= "string" or
+      (#value ~= 7 and #value ~= 9) or
+      string.match(value, "^#%x+$") == nil then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "background must use #RRGGBB or #RRGGBBAA format.")
+  end
+
+  local red = tonumber(string.sub(value, 2, 3), 16)
+  local green = tonumber(string.sub(value, 4, 5), 16)
+  local blue = tonumber(string.sub(value, 6, 7), 16)
+  local alpha = 255
+  if #value == 9 then
+    alpha = tonumber(string.sub(value, 8, 9), 16)
+  end
+
+  return app.pixelColor.rgba(red, green, blue, alpha)
+end
+
 local function activeSpriteStatus()
   local sprite = app.sprite
   if sprite == nil then
@@ -174,7 +199,7 @@ handlers.get_status = function(_params)
   return result
 end
 
-handlers.get_document = function(_params)
+local function documentSummary()
   local site = app.site
   local sprite = site.sprite
   if sprite == nil then
@@ -226,6 +251,87 @@ handlers.get_document = function(_params)
       summary.pivot = pointSummary(slice.pivot)
     end
     result.slices[index] = summary
+  end
+
+  return result
+end
+
+handlers.get_document = function(_params)
+  return documentSummary()
+end
+
+handlers.create_sprite = function(params)
+  local paramsType = type(params)
+  if paramsType ~= "table" and paramsType ~= "userdata" then
+    raiseBridgeError("INVALID_REQUEST", "create_sprite params must be an object.")
+  end
+
+  if not isInteger(params.width) or
+      params.width < 1 or
+      params.width > MAX_ASEPRITE_SPRITE_DIMENSION then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "width must be an integer supported by Aseprite.")
+  end
+  if not isInteger(params.height) or
+      params.height < 1 or
+      params.height > MAX_ASEPRITE_SPRITE_DIMENSION then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "height must be an integer supported by Aseprite.")
+  end
+  if params.name ~= nil and
+      (type(params.name) ~= "string" or
+       #params.name < 1 or
+       #params.name > 255 or
+       string.match(params.name, "%S") == nil) then
+    raiseBridgeError(
+      "INVALID_REQUEST",
+      "name must be a non-empty string of at most 255 characters.")
+  end
+
+  local background = nil
+  if params.background ~= nil then
+    background = parseHexColor(params.background)
+  end
+
+  local sprite = nil
+  local ok, result = pcall(function()
+    sprite = Sprite(params.width, params.height, ColorMode.RGB)
+    if sprite == nil then
+      error("Aseprite did not create the sprite.")
+    end
+
+    if params.name ~= nil then
+      sprite.filename = params.name
+    end
+
+    if background ~= nil then
+      local layer = sprite.layers[1]
+      local frame = sprite.frames[1]
+      if layer == nil or frame == nil then
+        error("The new sprite has no editable layer or frame.")
+      end
+
+      local image = Image(sprite.spec)
+      image:clear(image.bounds, background)
+      local cel = sprite.cels[1]
+      if cel == nil then
+        sprite:newCel(layer, frame, image, Point(0, 0))
+      else
+        cel.image = image
+      end
+    end
+
+    app.refresh()
+    return documentSummary()
+  end)
+
+  if not ok then
+    if sprite ~= nil then
+      sprite:close()
+    end
+    error(result, 0)
   end
 
   return result
